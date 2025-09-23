@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001"], // Allow requests from our React client
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     methods: ["GET", "POST"]
   }
 });
@@ -32,14 +32,21 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Shuffle deck (Fisher-Yates shuffle)
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [deck[i], deck[j]] = [deck[j], deck[i]];
     }
 
-    console.log('Game started, sending deck to client');
-    socket.emit('game-started', deck);
+    const playerHand = deck.splice(0, 7);
+    const discardPile = deck.splice(0, 1);
+    const drawPileSize = deck.length;
+
+    console.log('Dealt cards, sending initial game state');
+    socket.emit('game-state-update', { 
+      playerHand,
+      discardPile,
+      drawPileSize
+    });
   });
 
   socket.on('disconnect', () => {
