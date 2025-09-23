@@ -20,6 +20,10 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected:', socket.id);
 
+  let playerHand = [];
+  let discardPile = [];
+  let drawPile = []; 
+
   socket.on('start-game', () => {
     console.log('Received start-game event from:', socket.id);
     const suits = ['♥', '♦', '♣', '♠'];
@@ -32,21 +36,45 @@ io.on('connection', (socket) => {
       }
     }
 
+    
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [deck[i], deck[j]] = [deck[j], deck[i]];
     }
 
-    const playerHand = deck.splice(0, 7);
-    const discardPile = deck.splice(0, 1);
-    const drawPileSize = deck.length;
+    playerHand = deck.splice(0, 7);
+    discardPile = deck.splice(0, 1);
+    drawPile = deck; 
 
     console.log('Dealt cards, sending initial game state');
     socket.emit('game-state-update', { 
       playerHand,
       discardPile,
-      drawPileSize
+      drawPileSize: drawPile.length
     });
+  });
+
+  socket.on('play-card', (cardToPlay) => {
+    console.log(`Player ${socket.id} wants to play:`, cardToPlay);
+
+    
+    const cardIndex = playerHand.findIndex(card => card.suit === cardToPlay.suit && card.rank === cardToPlay.rank);
+
+    if (cardIndex > -1) {
+      const playedCard = playerHand.splice(cardIndex, 1)[0]; 
+      discardPile.unshift(playedCard); 
+
+      console.log(`Player ${socket.id} played:`, playedCard);
+      
+      socket.emit('game-state-update', {
+        playerHand,
+        discardPile,
+        drawPileSize: drawPile.length
+      });
+    } else {
+      console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} not found in player's hand.`);
+      
+    }
   });
 
   socket.on('disconnect', () => {
