@@ -77,6 +77,23 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('draw-card', () => {
+    console.log(`Player ${socket.id} wants to draw a card.`);
+    if (drawPile.length > 0) {
+      const drawnCard = drawPile.shift();
+      playerHand.push(drawnCard);
+
+      console.log(`Player ${socket.id} drew:`, drawnCard);
+      socket.emit('game-state-update', {
+        playerHand,
+        discardPile,
+        drawPileSize: drawPile.length
+      });
+    } else {
+      console.log(`Draw pile is empty for player ${socket.id}.`);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('user disconnected:', socket.id);
   });

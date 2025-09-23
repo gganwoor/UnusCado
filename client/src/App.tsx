@@ -74,6 +74,15 @@ function App() {
     }
   };
 
+  const handleDrawCard = () => {
+    if (socketRef.current) {
+      console.log('Drawing card from pile.');
+      socketRef.current.emit('draw-card');
+    } else {
+      console.error('Socket not connected when trying to draw card.');
+    }
+  };
+
   const startGame = () => {
     if (socketRef.current) {
       console.log('Start Game button clicked. Emitting start-game event.');
@@ -121,7 +130,7 @@ function App() {
           </div>
         </div>
 
-        <div className="Draw-pile">
+        <div className="Draw-pile" onClick={handleDrawCard}>
           <h2>Draw Pile ({drawPileSize} cards)</h2>
           {drawPileSize > 0 ? (
             <div className="Card back">Draw</div>
