@@ -12,13 +12,18 @@ interface GameState {
   playerHand: Card[];
   discardPile: Card[];
   drawPileSize: number;
+  currentPlayerId: string;
 }
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
+  const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [discardPile, setDiscardPile] = useState<Card[]>([]);
   const [drawPileSize, setDrawPileSize] = useState<number>(0);
+
+  console.log('Render: myPlayerId=', myPlayerId, 'currentPlayerId=', currentPlayerId, 'isMyTurn=', myPlayerId === currentPlayerId);
 
   
   const socketRef = React.useRef<Socket | null>(null);
@@ -27,15 +32,21 @@ function App() {
     
     const socket: Socket = io('http://localhost:4000');
     socketRef.current = socket; 
+    console.log('useEffect: Socket created. Initial socket.id=', socket.id);
+
+    
+    setIsConnected(socket.connected);
 
     function onConnect() {
-      console.log('Socket connected!');
+      console.log('Socket connected! socket.id=', socket.id);
       setIsConnected(true);
+      setMyPlayerId(socket.id ?? null); 
     }
 
     function onDisconnect() {
       console.log('Socket disconnected!');
       setIsConnected(false);
+      setMyPlayerId(null); 
     }
 
     function onGameStateUpdate(gameState: GameState) {
@@ -43,6 +54,7 @@ function App() {
       setPlayerHand(gameState.playerHand);
       setDiscardPile(gameState.discardPile);
       setDrawPileSize(gameState.drawPileSize);
+      setCurrentPlayerId(gameState.currentPlayerId);
     }
 
     
@@ -57,7 +69,7 @@ function App() {
 
     
     return () => {
-      console.log('Cleaning up socket...');
+      console.log('Cleaning up socket. useEffect cleanup called.');
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('game-state-update', onGameStateUpdate);
@@ -65,7 +77,13 @@ function App() {
     };
   }, []); 
 
+  const isMyTurn = myPlayerId === currentPlayerId; 
+
   const handlePlayCard = (card: Card) => {
+    if (!isMyTurn) { 
+      console.log('Not your turn to play.');
+      return;
+    }
     if (socketRef.current) {
       console.log('Playing card:', card);
       socketRef.current.emit('play-card', card);
@@ -75,6 +93,10 @@ function App() {
   };
 
   const handleDrawCard = () => {
+    if (!isMyTurn) { 
+      console.log('Not your turn to draw.');
+      return;
+    }
     if (socketRef.current) {
       console.log('Drawing card from pile.');
       socketRef.current.emit('draw-card');
@@ -101,6 +123,11 @@ function App() {
       <header className="App-header">
         <h1>Unus Cado</h1>
         <p>Server Connection Status: {isConnected ? 'Connected' : 'Disconnected'}</p>
+        <p>
+          {isConnected && myPlayerId && currentPlayerId && (
+            isMyTurn ? 'Your Turn!' : 'Opponent\'s Turn' 
+          )}
+        </p>
         <button onClick={startGame} disabled={!isConnected}>
           Start Game
         </button>
@@ -110,7 +137,7 @@ function App() {
           <h2>My Hand ({playerHand.length} cards)</h2>
           <div className="Card-list">
             {playerHand.map((card, index) => (
-              <div key={index} className="Card" onClick={() => handlePlayCard(card)}>
+              <div key={index} className="Card" onClick={() => handlePlayCard(card)} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
                 {card.rank}{card.suit}
               </div>
             ))}
@@ -130,7 +157,7 @@ function App() {
           </div>
         </div>
 
-        <div className="Draw-pile" onClick={handleDrawCard}>
+        <div className="Draw-pile" onClick={handleDrawCard} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
           <h2>Draw Pile ({drawPileSize} cards)</h2>
           {drawPileSize > 0 ? (
             <div className="Card back">Draw</div>
