@@ -12,16 +12,18 @@ interface GameState {
   playerHand: Card[];
   discardPile: Card[];
   drawPileSize: number;
-  currentPlayerId: string;
+  currentPlayerId: string; 
+  attackStack: number; 
 }
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
-  const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
-  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+  const [myPlayerId, setMyPlayerId] = useState<string | null>(null); 
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null); 
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [discardPile, setDiscardPile] = useState<Card[]>([]);
   const [drawPileSize, setDrawPileSize] = useState<number>(0);
+  const [attackStack, setAttackStack] = useState<number>(0); 
 
   console.log('Render: myPlayerId=', myPlayerId, 'currentPlayerId=', currentPlayerId, 'isMyTurn=', myPlayerId === currentPlayerId);
 
@@ -55,6 +57,7 @@ function App() {
       setDiscardPile(gameState.discardPile);
       setDrawPileSize(gameState.drawPileSize);
       setCurrentPlayerId(gameState.currentPlayerId);
+      setAttackStack(gameState.attackStack); 
     }
 
     
@@ -128,6 +131,7 @@ function App() {
             isMyTurn ? 'Your Turn!' : 'Opponent\'s Turn' 
           )}
         </p>
+        <p>Attack Stack: {attackStack}</p>
         <button onClick={startGame} disabled={!isConnected}>
           Start Game
         </button>

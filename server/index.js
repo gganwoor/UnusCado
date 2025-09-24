@@ -24,6 +24,7 @@ io.on('connection', (socket) => {
   let discardPile = [];
   let drawPile = [];
   let currentPlayerId = socket.id; 
+  let attackStack = 0;
 
   socket.on('start-game', () => {
     console.log('Received start-game event from:', socket.id);
@@ -48,13 +49,15 @@ io.on('connection', (socket) => {
     drawPile = deck;
 
     currentPlayerId = socket.id; 
+    attackStack = 0;
 
     console.log('Dealt cards, sending initial game state');
     socket.emit('game-state-update', { 
       playerHand,
       discardPile,
       drawPileSize: drawPile.length,
-      currentPlayerId: currentPlayerId 
+      currentPlayerId: currentPlayerId,
+      attackStack: attackStack 
     });
   });
 
@@ -89,6 +92,12 @@ io.on('connection', (socket) => {
         } else if (playedCard.rank === 'Q') {
           console.log(`Queen played! Game direction reversed.`);
           
+        } else if (playedCard.rank === '2') {
+          attackStack += 2;
+          console.log(`2 played! Attack stack is now: ${attackStack}`);
+        } else if (playedCard.rank === 'A') {
+          attackStack += 3;
+          console.log(`Ace played! Attack stack is now: ${attackStack}`);
         }
 
         console.log(`Player ${socket.id} played:`, playedCard);
@@ -99,22 +108,24 @@ io.on('connection', (socket) => {
           playerHand,
           discardPile,
           drawPileSize: drawPile.length,
-          currentPlayerId: currentPlayerId 
+          currentPlayerId: currentPlayerId,
+          attackStack: attackStack 
         });
       } else {
         console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} does not match top discard card ${topDiscardCard.rank}${topDiscardCard.suit}.`);
         
-        socket.emit('game-state-update', { 
+        socket.emit('game-state-update', {
           playerHand,
           discardPile,
           drawPileSize: drawPile.length,
-          currentPlayerId: currentPlayerId
+          currentPlayerId: currentPlayerId,
+          attackStack: attackStack 
         });
       }
     } else {
       console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} not found in player's hand.`);
       
-      socket.emit('game-state-update', { 
+      socket.emit('game-state-update', {
         playerHand,
         discardPile,
         drawPileSize: drawPile.length,
@@ -131,10 +142,24 @@ io.on('connection', (socket) => {
 
     console.log(`Player ${socket.id} wants to draw a card.`);
     if (drawPile.length > 0) {
-      const drawnCard = drawPile.shift();
-      playerHand.push(drawnCard);
+      let cardsToDraw = 1;
+      if (attackStack > 0) {
+        cardsToDraw = attackStack;
+        console.log(`Player ${socket.id} drawing ${cardsToDraw} cards due to attack stack.`);
+      }
 
-      console.log(`Player ${socket.id} drew:`, drawnCard);
+      for (let i = 0; i < cardsToDraw; i++) {
+        if (drawPile.length > 0) {
+          const drawnCard = drawPile.shift();
+          playerHand.push(drawnCard);
+        } else {
+          console.log(`Draw pile is empty, cannot draw more cards.`);
+          break;
+        }
+      }
+      attackStack = 0;
+
+      console.log(`Player ${socket.id} drew cards.`);
       
       currentPlayerId = socket.id;
 
@@ -142,7 +167,8 @@ io.on('connection', (socket) => {
         playerHand,
         discardPile,
         drawPileSize: drawPile.length,
-        currentPlayerId: currentPlayerId 
+        currentPlayerId: currentPlayerId,
+        attackStack: attackStack 
       });
     } else {
       console.log(`Draw pile is empty for player ${socket.id}.`);
