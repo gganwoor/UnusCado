@@ -76,7 +76,7 @@ io.on('connection', (socket) => {
       const topDiscardCard = discardPile[0]; 
 
       
-      if (cardToPlay.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
+      if (cardToPlay.rank === 'Joker' || topDiscardCard.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
         const playedCard = playerHand.splice(cardIndex, 1)[0]; 
         discardPile.unshift(playedCard); 
 
@@ -113,10 +113,6 @@ io.on('connection', (socket) => {
           }
         }
 
-        console.log(`Player ${socket.id} played:`, playedCard);
-        
-        currentPlayerId = socket.id; 
-
         socket.emit('game-state-update', {
           playerHand,
           discardPile,
@@ -124,6 +120,11 @@ io.on('connection', (socket) => {
           currentPlayerId: currentPlayerId,
           attackStack: attackStack 
         });
+
+        if (playerHand.length === 0) {
+          console.log(`Player ${socket.id} wins!`);
+          socket.emit('game-over', { winnerId: socket.id });
+        }
       } else {
         console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} does not match top discard card ${topDiscardCard.rank}${topDiscardCard.suit}.`);
         

@@ -24,6 +24,7 @@ function App() {
   const [discardPile, setDiscardPile] = useState<Card[]>([]);
   const [drawPileSize, setDrawPileSize] = useState<number>(0);
   const [attackStack, setAttackStack] = useState<number>(0); 
+  const [winnerId, setWinnerId] = useState<string | null>(null); 
 
   console.log('Render: myPlayerId=', myPlayerId, 'currentPlayerId=', currentPlayerId, 'isMyTurn=', myPlayerId === currentPlayerId);
 
@@ -58,12 +59,19 @@ function App() {
       setDrawPileSize(gameState.drawPileSize);
       setCurrentPlayerId(gameState.currentPlayerId);
       setAttackStack(gameState.attackStack); 
+      setWinnerId(null); 
+    }
+
+    function onGameOver(data: { winnerId: string }) {
+      console.log('Game Over! Winner:', data.winnerId);
+      setWinnerId(data.winnerId);
     }
 
     
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('game-state-update', onGameStateUpdate);
+    socket.on('game-over', onGameOver); 
 
     
     socket.onAny((event, ...args) => {
@@ -76,6 +84,7 @@ function App() {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('game-state-update', onGameStateUpdate);
+      socket.off('game-over', onGameOver); 
       socket.disconnect();
     };
   }, []); 
@@ -115,6 +124,7 @@ function App() {
       setPlayerHand([]);
       setDiscardPile([]);
       setDrawPileSize(0);
+      setWinnerId(null); 
       socketRef.current.emit('start-game');
     } else {
       console.error('Socket not connected when trying to start game.');
@@ -132,9 +142,15 @@ function App() {
           )}
         </p>
         <p>Attack Stack: {attackStack}</p>
-        <button onClick={startGame} disabled={!isConnected}>
+        <button onClick={startGame} disabled={!isConnected || winnerId !== null}>
           Start Game
         </button>
+        {winnerId && myPlayerId === winnerId && (
+          <h2>You Win!</h2>
+        )}
+        {winnerId && myPlayerId !== winnerId && (
+          <h2>Game Over!</h2> 
+        )}
       </header>
       <div className="Game-board">
         <div className="Player-hand">
