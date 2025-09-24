@@ -23,7 +23,7 @@ io.on('connection', (socket) => {
   let playerHand = [];
   let discardPile = [];
   let drawPile = [];
-  let currentPlayerId = socket.id; // For single player, it's always their turn
+  let currentPlayerId = socket.id; 
 
   socket.on('start-game', () => {
     console.log('Received start-game event from:', socket.id);
@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Shuffle deck (Fisher-Yates shuffle)
+    
     for (let i = deck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -47,49 +47,70 @@ io.on('connection', (socket) => {
     discardPile = deck.splice(0, 1);
     drawPile = deck;
 
-    currentPlayerId = socket.id; // Ensure it's this player's turn
+    currentPlayerId = socket.id; 
 
     console.log('Dealt cards, sending initial game state');
     socket.emit('game-state-update', { 
       playerHand,
       discardPile,
       drawPileSize: drawPile.length,
-      currentPlayerId: currentPlayerId // Include turn info
+      currentPlayerId: currentPlayerId 
     });
   });
 
   socket.on('play-card', (cardToPlay) => {
     if (socket.id !== currentPlayerId) {
       console.log(`Not player ${socket.id}'s turn to play.`);
-      return; // Not their turn
+      return; 
     }
 
     console.log(`Player ${socket.id} wants to play:`, cardToPlay);
     const cardIndex = playerHand.findIndex(card => card.suit === cardToPlay.suit && card.rank === cardToPlay.rank);
 
     if (cardIndex > -1) {
-      const playedCard = playerHand.splice(cardIndex, 1)[0];
-      discardPile.unshift(playedCard);
+      const topDiscardCard = discardPile[0]; 
 
-      console.log(`Player ${socket.id} played:`, playedCard);
-      // Advance turn (for single player, it's always their turn again)
-      currentPlayerId = socket.id; 
+      
+      if (cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
+        const playedCard = playerHand.splice(cardIndex, 1)[0]; 
+        discardPile.unshift(playedCard); 
 
-      socket.emit('game-state-update', {
+        console.log(`Player ${socket.id} played:`, playedCard);
+        
+        currentPlayerId = socket.id; 
+
+        socket.emit('game-state-update', {
+          playerHand,
+          discardPile,
+          drawPileSize: drawPile.length,
+          currentPlayerId: currentPlayerId 
+        });
+      } else {
+        console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} does not match top discard card ${topDiscardCard.rank}${topDiscardCard.suit}.`);
+        
+        socket.emit('game-state-update', { 
+          playerHand,
+          discardPile,
+          drawPileSize: drawPile.length,
+          currentPlayerId: currentPlayerId
+        });
+      }
+    } else {
+      console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} not found in player's hand.`);
+      
+      socket.emit('game-state-update', { 
         playerHand,
         discardPile,
         drawPileSize: drawPile.length,
-        currentPlayerId: currentPlayerId // Include updated turn info
+        currentPlayerId: currentPlayerId
       });
-    } else {
-      console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} not found in player's hand.`);
     }
   });
 
   socket.on('draw-card', () => {
     if (socket.id !== currentPlayerId) {
       console.log(`Not player ${socket.id}'s turn to draw.`);
-      return; // Not their turn
+      return; 
     }
 
     console.log(`Player ${socket.id} wants to draw a card.`);
@@ -98,14 +119,14 @@ io.on('connection', (socket) => {
       playerHand.push(drawnCard);
 
       console.log(`Player ${socket.id} drew:`, drawnCard);
-      // Advance turn (for single player, it's always their turn again)
+      
       currentPlayerId = socket.id;
 
       socket.emit('game-state-update', {
         playerHand,
         discardPile,
         drawPileSize: drawPile.length,
-        currentPlayerId: currentPlayerId // Include updated turn info
+        currentPlayerId: currentPlayerId 
       });
     } else {
       console.log(`Draw pile is empty for player ${socket.id}.`);
