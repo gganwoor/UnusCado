@@ -37,6 +37,8 @@ io.on('connection', (socket) => {
         deck.push({ suit, rank });
       }
     }
+    deck.push({ suit: 'Black', rank: 'Joker' });
+    deck.push({ suit: 'Color', rank: 'Joker' });
 
     
     for (let i = deck.length - 1; i > 0; i--) {
@@ -74,7 +76,7 @@ io.on('connection', (socket) => {
       const topDiscardCard = discardPile[0]; 
 
       
-      if (cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
+      if (cardToPlay.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
         const playedCard = playerHand.splice(cardIndex, 1)[0]; 
         discardPile.unshift(playedCard); 
 
@@ -98,6 +100,17 @@ io.on('connection', (socket) => {
         } else if (playedCard.rank === 'A') {
           attackStack += 3;
           console.log(`Ace played! Attack stack is now: ${attackStack}`);
+        } else if (playedCard.rank === '3') {
+          attackStack = 0;
+          console.log(`3 played! Attack stack reset to: ${attackStack}`);
+        } else if (playedCard.rank === 'Joker') {
+          if (playedCard.suit === 'Black') {
+            attackStack += 5;
+            console.log(`Black Joker played! Attack stack increased by 5 to: ${attackStack}`);
+          } else if (playedCard.suit === 'Color') {
+            attackStack += 10;
+            console.log(`Color Joker played! Attack stack increased by 10 to: ${attackStack}`);
+          }
         }
 
         console.log(`Player ${socket.id} played:`, playedCard);
