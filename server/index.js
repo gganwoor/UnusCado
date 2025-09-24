@@ -74,8 +74,8 @@ io.on('connection', (socket) => {
 
     if (cardIndex > -1) {
       const topDiscardCard = discardPile[0]; 
+      console.log(`DEBUG: cardToPlay:`, cardToPlay, `topDiscardCard:`, topDiscardCard);
 
-      
       if (cardToPlay.rank === 'Joker' || topDiscardCard.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
         const playedCard = playerHand.splice(cardIndex, 1)[0]; 
         discardPile.unshift(playedCard); 

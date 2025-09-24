@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import io, { Socket } from 'socket.io-client';
 import './App.css';
+import Card from './components/Card'; // Import the new Card component
 
 
-interface Card {
+interface CardData {
   suit: string;
   rank: string;
 }
 
 interface GameState {
-  playerHand: Card[];
-  discardPile: Card[];
+  playerHand: CardData[];
+  discardPile: CardData[];
   drawPileSize: number;
   currentPlayerId: string; 
   attackStack: number; 
@@ -20,8 +21,8 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [myPlayerId, setMyPlayerId] = useState<string | null>(null); 
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null); 
-  const [playerHand, setPlayerHand] = useState<Card[]>([]);
-  const [discardPile, setDiscardPile] = useState<Card[]>([]);
+  const [playerHand, setPlayerHand] = useState<CardData[]>([]);
+  const [discardPile, setDiscardPile] = useState<CardData[]>([]);
   const [drawPileSize, setDrawPileSize] = useState<number>(0);
   const [attackStack, setAttackStack] = useState<number>(0); 
   const [winnerId, setWinnerId] = useState<string | null>(null); 
@@ -91,7 +92,7 @@ function App() {
 
   const isMyTurn = myPlayerId === currentPlayerId; 
 
-  const handlePlayCard = (card: Card) => {
+  const handlePlayCard = (card: CardData) => {
     if (!isMyTurn) { 
       console.log('Not your turn to play.');
       return;
@@ -157,9 +158,7 @@ function App() {
           <h2>My Hand ({playerHand.length} cards)</h2>
           <div className="Card-list">
             {playerHand.map((card, index) => (
-              <div key={index} className="Card" onClick={() => handlePlayCard(card)} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
-                {card.rank}{card.suit}
-              </div>
+              <Card key={index} suit={card.suit} rank={card.rank} onClick={() => handlePlayCard(card)} className={isMyTurn ? '' : 'not-my-turn'} />
             ))}
           </div>
         </div>
@@ -168,11 +167,9 @@ function App() {
           <h2>Discard Pile</h2>
           <div className="Card-list">
             {discardPile.length > 0 ? (
-              <div className="Card">
-                {discardPile[0].rank}{discardPile[0].suit}
-              </div>
+              <Card suit={discardPile[0].suit} rank={discardPile[0].rank} />
             ) : (
-              <div className="Card empty">Empty</div>
+              <Card suit="" rank="" className="empty" />
             )}
           </div>
         </div>
@@ -180,9 +177,9 @@ function App() {
         <div className="Draw-pile" onClick={handleDrawCard} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
           <h2>Draw Pile ({drawPileSize} cards)</h2>
           {drawPileSize > 0 ? (
-            <div className="Card back">Draw</div>
+            <Card suit="" rank="" isFaceDown={true} />
           ) : (
-            <div className="Card empty">Empty</div>
+            <Card suit="" rank="" className="empty" />
           )}
         </div>
       </div>

@@ -1,0 +1,43 @@
+.card-container {
+  width: 80px; 
+  height: 112px; 
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2em;
+  font-weight: bold;
+  background-color: white;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s ease-in-out;
+  margin: 5px; 
+}
+
+.card-container:hover {
+  transform: translateY(-5px);
+}
+
+.card-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.joker-text {
+  text-align: center;
+  color: black;
+}
+
+.card-container.empty {
+  background-color: #eee;
+  color: #aaa;
+  font-style: italic;
+}
+
+.card-container.back {
+  background-color: #555; 
+  color: white;
+}
