@@ -75,6 +75,12 @@ io.on('connection', (socket) => {
         const playedCard = playerHand.splice(cardIndex, 1)[0]; 
         discardPile.unshift(playedCard); 
 
+        
+        if (playedCard.rank === '7') {
+          console.log(`7 played!! Changing suit to Spades (♠).`);
+          playedCard.suit = '♠'; 
+        }
+
         console.log(`Player ${socket.id} played:`, playedCard);
         
         currentPlayerId = socket.id; 
