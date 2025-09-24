@@ -76,9 +76,19 @@ io.on('connection', (socket) => {
         discardPile.unshift(playedCard); 
 
         
+        
         if (playedCard.rank === '7') {
-          console.log(`7 played!! Changing suit to Spades (♠).`);
+          console.log(`7 played! Changing suit to Spades (♠).`);
           playedCard.suit = '♠'; 
+        } else if (playedCard.rank === 'K') {
+          console.log(`King played! Player ${socket.id} acts again.`);
+          
+        } else if (playedCard.rank === 'J') {
+          console.log(`Jack played! Next player's turn is skipped.`);
+          
+        } else if (playedCard.rank === 'Q') {
+          console.log(`Queen played! Game direction reversed.`);
+          
         }
 
         console.log(`Player ${socket.id} played:`, playedCard);
