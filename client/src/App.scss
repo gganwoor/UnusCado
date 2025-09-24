@@ -1,0 +1,248 @@
+.App {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #5a3e2b;
+  color: #e2e8f0;
+  font-family: 'Arial', sans-serif;
+  padding: 20px;
+}
+
+.App-header {
+  background-color: transparent;
+  padding: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.App-header h1 {
+  margin-bottom: 10px;
+  color: #63b3ed;
+}
+
+.App-header p {
+  margin: 5px 0;
+}
+
+.Game-board {
+  display: grid;
+  grid-template-areas:
+    "other-players-left info-panel info-panel other-players-right"
+    ". discard-pile draw-pile ."
+    "player-hand player-hand player-hand player-hand";
+  grid-template-columns: 1fr repeat(2, auto) 1fr;
+  grid-template-rows: auto 1fr auto; 
+  gap: 10px;
+  width: 100%;
+  max-width: 1200px;
+  flex-grow: 1;
+  position: relative;
+}
+
+.info-panel {
+  grid-area: info-panel;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(45, 55, 72, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.Other-players {
+  grid-area: other-players-left;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+}
+
+.Other-player-info {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.Discard-pile {
+  grid-area: discard-pile;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: 100px;
+  min-height: 152px;
+}
+
+.Draw-pile {
+  grid-area: draw-pile;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: 80px;
+  min-height: 112px;
+  position: relative;
+  margin-left: 20px;
+  margin-top: -30px;
+}
+
+.draw-pile-stack {
+  position: relative;
+  width: 80px;
+  height: 112px;
+}
+
+.draw-pile-stack .card-container.stacked-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  @for $i from 1 through 52 {
+    &:nth-child(#{$i}) {
+      z-index: $i;
+      transform: translate(#{$i - 1}px, -#{$i - 1}px);
+    }
+  }
+}
+
+.Player-hand {
+  grid-area: player-hand;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-top: 20px;
+  min-height: 120px;
+}
+
+.Card-list {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 112px;
+  padding-left: 20px;
+}
+
+.Player-hand .Card-list .card-container {
+  margin-left: -40px;
+  position: relative;
+  z-index: 1;
+}
+
+.Player-hand .Card-list .card-container:first-child {
+  margin-left: 0;
+}
+
+.Other-player-info .Card-list .card-container {
+  margin-left: -40px;
+  position: relative;
+  z-index: 1;
+}
+
+.Other-player-info .Card-list .card-container:first-child {
+  margin-left: 0;
+}
+
+.Card-list .card-container.not-my-turn {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.Card.empty {
+  background-color: rgba(102, 102, 102, 0.5);
+  color: #bbb;
+  border-style: dashed;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 1em;
+  background-color: #63b3ed;
+  color: #1a202c;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:hover:not(:disabled) {
+  background-color: #4299e1;
+}
+
+button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.suit-chooser-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.suit-chooser {
+  background-color: #2d3748;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.suit-chooser h3 {
+  color: #e2e8f0;
+  margin-bottom: 15px;
+}
+
+.suit-chooser button {
+  padding: 12px 25px;
+  font-size: 1.1em;
+  background-color: #63b3ed;
+  color: #1a202c;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.suit-chooser button:hover {
+  background-color: #4299e1;
+}

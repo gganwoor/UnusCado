@@ -7,6 +7,7 @@ interface CardProps {
   isFaceDown?: boolean;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties; 
 }
 
 const Card: React.FC<CardProps> = ({ suit, rank, isFaceDown = false, onClick, className }) => {

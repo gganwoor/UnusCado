@@ -87,31 +87,23 @@ class Game {
 
   applySpecialCardEffect(playedCard, socketId) {
     if (playedCard.rank === '7') {
-      console.log(`7 played! Suit will be chosen by player.`);
+      playedCard.suit = '♠';
     } else if (playedCard.rank === 'K') {
-      console.log(`King played! Player ${socketId} acts again.`);
     } else if (playedCard.rank === 'J') {
-      console.log(`Jack played! Next player's turn is skipped.`);
       this.advanceTurn(true);
     } else if (playedCard.rank === 'Q') {
-      console.log(`Queen played! Game direction reversed.`);
       this.direction *= -1;
     } else if (playedCard.rank === '2') {
       this.attackStack += 2;
-      console.log(`2 played! Attack stack is now: ${this.attackStack}`);
     } else if (playedCard.rank === 'A') {
       this.attackStack += 3;
-      console.log(`Ace played! Attack stack is now: ${this.attackStack}`);
     } else if (playedCard.rank === '3') {
       this.attackStack = 0;
-      console.log(`3 played! Attack stack reset to: ${this.attackStack}`);
     } else if (playedCard.rank === 'Joker') {
       if (playedCard.suit === 'Black') {
         this.attackStack += 5;
-        console.log(`Black Joker played! Attack stack increased by 5 to: ${this.attackStack}`);
       } else if (playedCard.suit === 'Color') {
         this.attackStack += 10;
-        console.log(`Color Joker played! Attack stack increased by 10 to: ${this.attackStack}`);
       }
     }
   }
@@ -119,7 +111,6 @@ class Game {
   playCard(socketId, cardToPlay) {
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
-      console.log(`Not player ${socketId}'s turn to play.`);
       return false;
     }
 
@@ -131,8 +122,6 @@ class Game {
       if (cardToPlay.rank === 'Joker' || topDiscardCard.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
         const playedCard = player.hand.splice(cardIndex, 1)[0];
         this.discardPile.unshift(playedCard);
-
-        console.log(`Player ${socketId} played:`, playedCard);
 
         if (playedCard.rank === '7') {
           this.pendingSuitChange = { card: playedCard, playerId: socketId };
@@ -147,11 +136,9 @@ class Game {
 
         return true;
       } else {
-        console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} does not match top discard card ${topDiscardCard.rank}${topDiscardCard.suit}.`);
         return false;
       }
     } else {
-      console.log(`Invalid move: Card ${cardToPlay.rank}${cardToPlay.suit} not found in player's hand.`);
       return false;
     }
   }
@@ -159,16 +146,13 @@ class Game {
   drawCard(socketId) {
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
-      console.log(`Not player ${socketId}'s turn to draw.`);
       return false;
     }
 
-    console.log(`Player ${socketId} wants to draw a card.`);
     if (this.drawPile.length > 0) {
       let cardsToDraw = 1;
       if (this.attackStack > 0) {
         cardsToDraw = this.attackStack;
-        console.log(`Player ${socketId} drawing ${cardsToDraw} cards due to attack stack.`);
       }
 
       for (let i = 0; i < cardsToDraw; i++) {
@@ -176,18 +160,14 @@ class Game {
           const drawnCard = this.drawPile.shift();
           player.hand.push(drawnCard);
         } else {
-          console.log(`Draw pile is empty, cannot draw more cards.`);
           break;
         }
       }
       this.attackStack = 0;
 
-      console.log(`Player ${socketId} drew cards.`);
-      
       this.advanceTurn();
       return true;
     } else {
-      console.log(`Draw pile is empty for player ${socketId}.`);
       return false;
     }
   }
@@ -202,7 +182,6 @@ class Game {
 
     nextPlayerIndex = (nextPlayerIndex % this.players.length + this.players.length) % this.players.length;
     this.currentPlayerIndex = nextPlayerIndex;
-    console.log(`Turn advanced to player: ${this.players[this.currentPlayerIndex].name} (${this.players[this.currentPlayerIndex].id})`);
   }
 
   checkWinCondition(socketId) {
@@ -216,12 +195,9 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected:', socket.id);
-
   const GAME_ID = 'defaultGame';
   if (!games[GAME_ID]) {
     games[GAME_ID] = new Game(GAME_ID);
-    console.log(`Game ${GAME_ID} created.`);
   }
   const game = games[GAME_ID];
 
@@ -229,12 +205,10 @@ io.on('connection', (socket) => {
   game.addPlayer(socket.id, playerName);
   players[socket.id] = { gameId: GAME_ID, name: playerName };
   socket.join(GAME_ID);
-  console.log(`${playerName} (${socket.id}) joined game ${GAME_ID}. Total players: ${game.players.length}`);
 
   socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
 
   socket.on('start-game', () => {
-    console.log(`Received start-game event from: ${socket.id} in game ${GAME_ID}`);
     game.startGame();
     game.players.forEach(p => {
       io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
@@ -242,7 +216,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('play-card', (cardToPlay) => {
-    console.log(`Player ${socket.id} wants to play:`, cardToPlay);
     const result = game.playCard(socket.id, cardToPlay);
 
     if (result === 'choose-suit') {
@@ -253,7 +226,6 @@ io.on('connection', (socket) => {
       });
 
       if (game.checkWinCondition(socket.id)) {
-        console.log(`Player ${socket.id} wins game ${GAME_ID}!`);
         io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
       }
     } else {
@@ -262,7 +234,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('suit-chosen', ({ chosenSuit }) => {
-    console.log(`Player ${socket.id} chose suit: ${chosenSuit}`);
     if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
       const { card, playerId } = game.pendingSuitChange;
       card.suit = chosenSuit;
@@ -274,17 +245,14 @@ io.on('connection', (socket) => {
       });
 
       if (game.checkWinCondition(socket.id)) {
-        console.log(`Player ${socket.id} wins game ${GAME_ID}!`);
         io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
       }
     } else {
-      console.log(`Invalid suit choice or no pending suit change for player ${socket.id}.`);
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
   });
 
   socket.on('draw-card', () => {
-    console.log(`Player ${socket.id} wants to draw a card.`);
     if (game.drawCard(socket.id)) {
       game.players.forEach(p => {
         io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
@@ -295,13 +263,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`user disconnected: ${socket.id} from game ${GAME_ID}`);
     game.removePlayer(socket.id);
     delete players[socket.id];
 
     if (game.players.length === 0) {
       delete games[GAME_ID];
-      console.log(`Game ${GAME_ID} is empty and removed.`);
     } else {
       game.players.forEach(p => {
         io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
