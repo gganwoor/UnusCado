@@ -4,6 +4,7 @@ import './App.scss';
 import Card from './components/Card';
 import InfoPanel from './components/InfoPanel/InfoPanel';
 import PlayerHand from './components/PlayerHand/PlayerHand';
+import OtherPlayers from './components/OtherPlayers/OtherPlayers';
 
 interface CardData {
   suit: string;
@@ -169,17 +170,7 @@ function App() {
         isMyTurn={isMyTurn}
       />
       <div className="Game-board">
-        <div className="Other-players">
-          {players.filter(p => p.id !== myPlayerId).map(p => (
-            <div key={p.id} className="Other-player-info">
-              <div className="Card-list">
-                {Array.from({ length: p.handSize }).map((_, i) => (
-                  <Card key={i} suit="" rank="" isFaceDown={true} className="small-card" />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <OtherPlayers players={players} myPlayerId={myPlayerId} />
 
         <div className="Discard-pile">
           {discardPile.length > 0 ? (

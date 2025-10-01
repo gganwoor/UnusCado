@@ -25,15 +25,7 @@
   position: relative;
 }
 
-.Other-players {
-  grid-area: other-players-left;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px;
-}
+
 
 .Other-player-info {
   background-color: transparent;
@@ -92,18 +84,6 @@
       transform: translate(#{$i - 1}px, -#{$i - 1}px);
     }
   }
-}
-
-
-
-.Other-player-info .Card-list .card-container {
-  margin-left: -40px;
-  position: relative;
-  z-index: 1;
-}
-
-.Other-player-info .Card-list .card-container:first-child {
-  margin-left: 0;
 }
 
 .Card-list .card-container.not-my-turn {
