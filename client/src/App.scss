@@ -32,7 +32,14 @@
   box-shadow: none;
 }
 
-
+.Card-list {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 112px;
+  padding-left: 20px;
+}
 
 .Card-list .card-container.not-my-turn {
   opacity: 0.5;

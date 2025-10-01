@@ -1,0 +1,25 @@
+{
+  "name": "unuscado",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm start --prefix server\" \"npm start --prefix client\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gganwoor/UnusCado.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gganwoor/UnusCado/issues"
+  },
+  "homepage": "https://github.com/gganwoor/UnusCado#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
