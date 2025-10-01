@@ -6,6 +6,7 @@ import InfoPanel from './components/InfoPanel/InfoPanel';
 import PlayerHand from './components/PlayerHand/PlayerHand';
 import OtherPlayers from './components/OtherPlayers/OtherPlayers';
 import GameBoard from './components/GameBoard/GameBoard';
+import SuitChooser from './components/SuitChooser/SuitChooser';
 
 interface CardData {
   suit: string;
@@ -187,15 +188,10 @@ function App() {
         />
 
         {showSuitChooser && (
-          <div className="suit-chooser-overlay">
-            <div className="suit-chooser">
-              <h3>Choose a Suit for {pendingSuitChangeCard?.rank}</h3>
-              <button onClick={() => handleSuitChoice('♥')}>♥ Hearts</button>
-              <button onClick={() => handleSuitChoice('♦')}>♦ Diamonds</button>
-              <button onClick={() => handleSuitChoice('♣')}>♣ Clubs</button>
-              <button onClick={() => handleSuitChoice('♠')}>♠ Spades</button>
-            </div>
-          </div>
+          <SuitChooser 
+            pendingCardRank={pendingSuitChangeCard?.rank} 
+            onSuitChoice={handleSuitChoice} 
+          />
         )}
       </div>
     </div>
