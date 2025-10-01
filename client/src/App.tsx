@@ -5,6 +5,7 @@ import Card from './components/Card';
 import InfoPanel from './components/InfoPanel/InfoPanel';
 import PlayerHand from './components/PlayerHand/PlayerHand';
 import OtherPlayers from './components/OtherPlayers/OtherPlayers';
+import GameBoard from './components/GameBoard/GameBoard';
 
 interface CardData {
   suit: string;
@@ -172,31 +173,12 @@ function App() {
       <div className="Game-board">
         <OtherPlayers players={players} myPlayerId={myPlayerId} />
 
-        <div className="Discard-pile">
-          {discardPile.length > 0 ? (
-            <Card suit={discardPile[0].suit} rank={discardPile[0].rank} />
-          ) : (
-            <Card suit="" rank="" className="empty" />
-          )}
-        </div>
-
-        <div className="Draw-pile" onClick={handleDrawCard} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
-          <div className="Card-list draw-pile-stack">
-            {Array.from({ length: drawPileSize }).map((_, i) => (
-              <Card 
-                key={i} 
-                suit="" 
-                rank="" 
-                isFaceDown={true} 
-                className="stacked-card" 
-                style={{ top: `${i * -1}px`, left: `${i * 1}px`, zIndex: i + 1 }}
-              />
-            ))}
-            {drawPileSize === 0 && (
-              <Card suit="" rank="" className="empty" />
-            )}
-          </div>
-        </div>
+        <GameBoard 
+          discardPile={discardPile}
+          drawPileSize={drawPileSize}
+          isMyTurn={isMyTurn}
+          onDrawCard={handleDrawCard}
+        />
 
         <PlayerHand 
           hand={playerHand} 

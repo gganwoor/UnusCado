@@ -25,8 +25,6 @@
   position: relative;
 }
 
-
-
 .Other-player-info {
   background-color: transparent;
   padding: 0;
@@ -34,57 +32,7 @@
   box-shadow: none;
 }
 
-.Discard-pile {
-  grid-area: discard-pile;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
-  min-width: 100px;
-  min-height: 152px;
-}
 
-.Draw-pile {
-  grid-area: draw-pile;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
-  min-width: 80px;
-  min-height: 112px;
-  position: relative;
-  margin-left: 20px;
-  margin-top: -30px;
-}
-
-.draw-pile-stack {
-  position: relative;
-  width: 80px;
-  height: 112px;
-}
-
-.draw-pile-stack .card-container.stacked-card {
-  position: absolute;
-  top: 0;
-  left: 0;
-  margin: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-  @for $i from 1 through 52 {
-    &:nth-child(#{$i}) {
-      z-index: $i;
-      transform: translate(#{$i - 1}px, -#{$i - 1}px);
-    }
-  }
-}
 
 .Card-list .card-container.not-my-turn {
   opacity: 0.5;
