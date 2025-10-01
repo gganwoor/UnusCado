@@ -1,0 +1,23 @@
+.Player-hand {
+  grid-area: player-hand;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-top: 20px;
+  min-height: 120px;
+
+  .Card-list .card-container {
+    margin-left: -40px;
+    position: relative;
+    z-index: 1;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+}

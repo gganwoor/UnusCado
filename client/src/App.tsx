@@ -3,6 +3,7 @@ import io, { Socket } from 'socket.io-client';
 import './App.scss';
 import Card from './components/Card';
 import InfoPanel from './components/InfoPanel/InfoPanel';
+import PlayerHand from './components/PlayerHand/PlayerHand';
 
 interface CardData {
   suit: string;
@@ -206,13 +207,11 @@ function App() {
           </div>
         </div>
 
-        <div className="Player-hand">
-          <div className="Card-list">
-            {playerHand.map((card, index) => (
-              <Card key={index} suit={card.suit} rank={card.rank} onClick={() => handlePlayCard(card)} className={isMyTurn ? '' : 'not-my-turn'} />
-            ))}
-          </div>
-        </div>
+        <PlayerHand 
+          hand={playerHand} 
+          isMyTurn={isMyTurn} 
+          onPlayCard={handlePlayCard} 
+        />
 
         {showSuitChooser && (
           <div className="suit-chooser-overlay">
