@@ -86,9 +86,7 @@ class Game {
   }
 
   applySpecialCardEffect(playedCard, socketId) {
-    if (playedCard.rank === '7') {
-      playedCard.suit = '♠';
-    } else if (playedCard.rank === 'K') {
+    if (playedCard.rank === 'K') {
     } else if (playedCard.rank === 'J') {
       this.advanceTurn(true);
     } else if (playedCard.rank === 'Q') {
@@ -147,6 +145,20 @@ class Game {
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
       return false;
+    }
+
+    if (this.drawPile.length === 0) {
+      if (this.discardPile.length <= 1) {
+        return false;
+      }
+      const topCard = this.discardPile.shift();
+      this.drawPile = this.discardPile;
+      
+      for (let i = this.drawPile.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.drawPile[i], this.drawPile[j]] = [this.drawPile[j], this.drawPile[i]];
+      }
+      this.discardPile = [topCard];
     }
 
     if (this.drawPile.length > 0) {
@@ -234,21 +246,20 @@ io.on('connection', (socket) => {
   });
 
   socket.on('suit-chosen', ({ chosenSuit }) => {
-    if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
-      const { card, playerId } = game.pendingSuitChange;
-      card.suit = chosenSuit;
-      game.applySpecialCardEffect(card, playerId);
-      game.pendingSuitChange = null;
-
-      game.players.forEach(p => {
-        io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-      });
-
-      if (game.checkWinCondition(socket.id)) {
-        io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
-      }
-    } else {
-      socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
+          if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
+            const { card, playerId } = game.pendingSuitChange;
+            card.suit = chosenSuit;
+            game.pendingSuitChange = null;
+            game.advanceTurn();
+    
+            game.players.forEach(p => {
+              io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+            });
+    
+            if (game.checkWinCondition(socket.id)) {
+              io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
+            }
+          } else {      socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
   });
 
@@ -263,16 +274,32 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    const disconnectedPlayerIndex = game.players.findIndex(p => p.id === socket.id);
+    if (disconnectedPlayerIndex === -1) return;
+
+    const wasCurrentPlayer = game.currentPlayerIndex === disconnectedPlayerIndex;
+    
     game.removePlayer(socket.id);
     delete players[socket.id];
 
     if (game.players.length === 0) {
       delete games[GAME_ID];
-    } else {
-      game.players.forEach(p => {
-        io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-      });
+      return; 
     }
+
+    if (disconnectedPlayerIndex < game.currentPlayerIndex) {
+      game.currentPlayerIndex--;
+    }
+
+    if (wasCurrentPlayer) {
+      game.currentPlayerIndex = game.currentPlayerIndex % game.players.length;
+    }
+    
+    game.currentPlayerIndex = (game.currentPlayerIndex + game.players.length) % game.players.length;
+
+    game.players.forEach(p => {
+      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+    });
   });
 });
 

@@ -158,16 +158,27 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Unus Cado</h1>
-        <button onClick={startGame} disabled={!isConnected || winnerId !== null}>
-          Start Game
-        </button>
-        {winnerId && myPlayerId === winnerId && (
-          <h2>You Win!</h2>
-        )}
-        {winnerId && myPlayerId !== winnerId && (
-          <h2>Game Over! Winner: {players.find(p => p.id === winnerId)?.name}</h2> 
-        )}
+        <div className="info-panel">
+          <h1>Unus Cado</h1>
+          {isConnected && myPlayerId && players.length > 0 && (
+            <p>You are: {players.find(p => p.id === myPlayerId)?.name}</p>
+          )}
+          <p>
+            {isConnected && myPlayerId && currentPlayerId && (
+              isMyTurn ? 'Your Turn!' : `It's ${players.find(p => p.id === currentPlayerId)?.name}'s Turn` 
+            )}
+          </p>
+          <p>Attack Stack: {attackStack}</p>
+          <button onClick={startGame} disabled={!isConnected || winnerId !== null}>
+            Start Game
+          </button>
+          {winnerId && myPlayerId === winnerId && (
+            <h2>You Win!</h2>
+          )}
+          {winnerId && myPlayerId !== winnerId && (
+            <h2>Game Over! Winner: {players.find(p => p.id === winnerId)?.name}</h2> 
+          )}
+        </div>
       </header>
       <div className="Game-board">
         <div className="Other-players">
@@ -193,12 +204,13 @@ function App() {
         <div className="Draw-pile" onClick={handleDrawCard} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
           <div className="Card-list draw-pile-stack">
             {Array.from({ length: drawPileSize }).map((_, i) => (
-              <Card
-                key={i}
-                suit=""
-                rank=""
-                isFaceDown={true}
-                className="stacked-card"
+              <Card 
+                key={i} 
+                suit="" 
+                rank="" 
+                isFaceDown={true} 
+                className="stacked-card" 
+                style={{ top: `${i * -1}px`, left: `${i * 1}px`, zIndex: i + 1 }}
               />
             ))}
             {drawPileSize === 0 && (
