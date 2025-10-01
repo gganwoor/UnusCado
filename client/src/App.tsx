@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import io, { Socket } from 'socket.io-client';
 import './App.scss';
 import Card from './components/Card';
-
+import InfoPanel from './components/InfoPanel/InfoPanel';
 
 interface CardData {
   suit: string;
@@ -157,29 +157,16 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <div className="info-panel">
-          <h1>Unus Cado</h1>
-          {isConnected && myPlayerId && players.length > 0 && (
-            <p>You are: {players.find(p => p.id === myPlayerId)?.name}</p>
-          )}
-          <p>
-            {isConnected && myPlayerId && currentPlayerId && (
-              isMyTurn ? 'Your Turn!' : `It's ${players.find(p => p.id === currentPlayerId)?.name}'s Turn` 
-            )}
-          </p>
-          <p>Attack Stack: {attackStack}</p>
-          <button onClick={startGame} disabled={!isConnected || winnerId !== null}>
-            Start Game
-          </button>
-          {winnerId && myPlayerId === winnerId && (
-            <h2>You Win!</h2>
-          )}
-          {winnerId && myPlayerId !== winnerId && (
-            <h2>Game Over! Winner: {players.find(p => p.id === winnerId)?.name}</h2> 
-          )}
-        </div>
-      </header>
+      <InfoPanel
+        isConnected={isConnected}
+        myPlayerId={myPlayerId}
+        currentPlayerId={currentPlayerId}
+        players={players}
+        attackStack={attackStack}
+        winnerId={winnerId}
+        onStartGame={startGame}
+        isMyTurn={isMyTurn}
+      />
       <div className="Game-board">
         <div className="Other-players">
           {players.filter(p => p.id !== myPlayerId).map(p => (
