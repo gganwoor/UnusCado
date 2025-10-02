@@ -35,12 +35,12 @@ const Card: React.FC<CardProps> = ({ suit, rank, isFaceDown = false, onClick, cl
   return (
     <div className={`card-container ${className || ''}`} onClick={onClick}>
       {isFaceDown ? (
-        <img src="/assets/cardimg/Card-back.webp" alt="Card Back" className="card-image" loading="lazy" /> 
+        <img src="/assets/cardimg/Card-back.webp" alt="Card Back" className="card-image" /> 
       ) : (
         rank === 'Joker' ? (
           <div className="joker-text">{suit} {rank}</div> 
         ) : (
-          <img src={cardImagePath} alt={`${rank} of ${suit}`} className="card-image" loading="lazy" />
+          <img src={cardImagePath} alt={`${rank} of ${suit}`} className="card-image" />
         )
       )}
     </div>
