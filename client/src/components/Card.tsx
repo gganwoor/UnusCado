@@ -27,7 +27,7 @@ const Card: React.FC<CardProps> = ({ suit, rank, isFaceDown = false, onClick, cl
     const mappedRank = rankMap[r] || r;
     const mappedSuit = suitMap[s] || s;
 
-    return `/assets/cardimg/${mappedRank}${mappedSuit}.png`;
+    return `/assets/cardimg/${mappedRank}${mappedSuit}.webp`;
   };
 
   const cardImagePath = getCardImage(suit, rank);
@@ -35,7 +35,7 @@ const Card: React.FC<CardProps> = ({ suit, rank, isFaceDown = false, onClick, cl
   return (
     <div className={`card-container ${className || ''}`} onClick={onClick}>
       {isFaceDown ? (
-        <img src="/assets/cardimg/Card-back.png" alt="Card Back" className="card-image" /> 
+        <img src="/assets/cardimg/Card-back.webp" alt="Card Back" className="card-image" /> 
       ) : (
         rank === 'Joker' ? (
           <div className="joker-text">{suit} {rank}</div> 
