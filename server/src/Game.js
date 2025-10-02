@@ -9,6 +9,7 @@ class Game {
     this.attackStack = 0;
     this.direction = 1;
     this.pendingSuitChange = null;
+    this.countdownState = { ownerId: null, number: null };
   }
 
   addPlayer(socketId, playerName) {
@@ -31,22 +32,34 @@ class Game {
       drawPileSize: this.drawPile.length,
       currentPlayerId: this.players[this.currentPlayerIndex] ? this.players[this.currentPlayerIndex].id : null,
       attackStack: this.attackStack,
-      players: this.players.map(p => ({ id: p.id, name: p.name, handSize: p.hand.length }))
+      players: this.players.map(p => ({ id: p.id, name: p.name, handSize: p.hand.length })),
+      countdownState: this.countdownState,
     };
   }
 
   startGame() {
-    const suits = ['♥', '♦', '♣', '♠'];
+    const suits = {
+      '♥': 'Red',
+      '♦': 'Red',
+      '♣': 'Black',
+      '♠': 'Black'
+    };
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     
     this.deck = [];
-    for (const suit of suits) {
+    for (const suitSymbol in suits) {
+      const color = suits[suitSymbol];
       for (const rank of ranks) {
-        this.deck.push({ suit, rank });
+        this.deck.push({ suit: suitSymbol, rank, color });
       }
     }
-    this.deck.push({ suit: 'Black', rank: 'Joker' });
-    this.deck.push({ suit: 'Color', rank: 'Joker' });
+    this.deck.push({ suit: 'Black', rank: 'Joker', color: 'Black' });
+    this.deck.push({ suit: 'Color', rank: 'Joker', color: 'Red' });
+
+    this.deck.push({ suit: '♥', rank: '3', color: 'Red', isCountdown: true });
+    this.deck.push({ suit: '♦', rank: '2', color: 'Red', isCountdown: true });
+    this.deck.push({ suit: '♣', rank: '1', color: 'Black', isCountdown: true });
+    this.deck.push({ suit: '♠', rank: '0', color: 'Black', isCountdown: true });
 
     
     for (let i = this.deck.length - 1; i > 0; i--) {
@@ -65,9 +78,12 @@ class Game {
     this.attackStack = 0;
     this.direction = 1;
     this.pendingSuitChange = null;
+    this.countdownState = { ownerId: null, number: null };
   }
 
   applySpecialCardEffect(playedCard, socketId) {
+    if (playedCard.isCountdown) return;
+
     if (playedCard.rank === 'K') {
     } else if (playedCard.rank === 'J') {
       this.advanceTurn(true);
@@ -94,30 +110,72 @@ class Game {
       return false;
     }
 
-    const cardIndex = player.hand.findIndex(card => card.suit === cardToPlay.suit && card.rank === cardToPlay.rank);
+    const cardIndex = player.hand.findIndex(card => 
+      card.suit === cardToPlay.suit && 
+      card.rank === cardToPlay.rank &&
+      !!card.isCountdown === !!cardToPlay.isCountdown
+    );
+    if (cardIndex === -1) return false;
 
-    if (cardIndex > -1) {
-      const topDiscardCard = this.discardPile[0];
+    const topCard = this.discardPile[0];
+    let isValidPlay = false;
+    let isInterrupt = false;
 
-      if (cardToPlay.rank === 'Joker' || topDiscardCard.rank === 'Joker' || cardToPlay.rank === topDiscardCard.rank || cardToPlay.suit === topDiscardCard.suit) {
-        const playedCard = player.hand.splice(cardIndex, 1)[0];
-        this.discardPile.unshift(playedCard);
+    const topIsCountdown = topCard && topCard.isCountdown;
 
-        if (playedCard.rank === '7') {
-          this.pendingSuitChange = { card: playedCard, playerId: socketId };
-          return 'choose-suit';
-        }
+    if (topIsCountdown && this.countdownState.number !== null) {
+      const isPlayedCardCountdown = cardToPlay.isCountdown;
+      const isInterruptCard = ['A', '2'].includes(cardToPlay.rank);
+      const isPlayedCardJoker = cardToPlay.rank === 'Joker';
 
-        this.applySpecialCardEffect(playedCard, socketId);
-
-        if (playedCard.rank !== 'K') { 
-          this.advanceTurn();
-        }
-
-        return true;
-      } else {
-        return false;
+      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === this.countdownState.number - 1) {
+        isValidPlay = true;
       }
+      else if (isPlayedCardJoker) {
+        isValidPlay = true;
+        isInterrupt = true;
+      } else if (this.countdownState.number === 1 && cardToPlay.rank === 'A') {
+        isValidPlay = true;
+        isInterrupt = true;
+      } else if (isInterruptCard) {
+        if (this.countdownState.number === 3 && cardToPlay.color === topCard.color) {
+          isValidPlay = true;
+          isInterrupt = true;
+        } else if (this.countdownState.number === 2 && cardToPlay.suit === topCard.suit) {
+          isValidPlay = true;
+          isInterrupt = true;
+        }
+      }
+    } else {
+      if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
+        isValidPlay = true;
+      } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
+        isValidPlay = true;
+      }
+    }
+
+    if (isValidPlay) {
+      const playedCard = player.hand.splice(cardIndex, 1)[0];
+      this.discardPile.unshift(playedCard);
+
+      if (playedCard.isCountdown) {
+        this.countdownState = { ownerId: socketId, number: parseInt(playedCard.rank, 10) };
+        if (playedCard.rank === '0') {
+          return 'countdown-win';
+        }
+      } else if (isInterrupt) {
+        this.countdownState = { ownerId: null, number: null };
+      } else {
+        this.countdownState = { ownerId: null, number: null };
+        this.applySpecialCardEffect(playedCard, socketId);
+      }
+      
+      if (playedCard.rank === '7' && !isInterrupt) {
+        this.pendingSuitChange = { card: playedCard, playerId: socketId };
+        return 'choose-suit';
+      }
+
+      return true;
     } else {
       return false;
     }
@@ -147,6 +205,7 @@ class Game {
       let cardsToDraw = 1;
       if (this.attackStack > 0) {
         cardsToDraw = this.attackStack;
+        this.attackStack = 0;
       }
 
       for (let i = 0; i < cardsToDraw; i++) {
@@ -157,9 +216,7 @@ class Game {
           break;
         }
       }
-      this.attackStack = 0;
-
-      this.advanceTurn();
+      
       return true;
     } else {
       return false;
@@ -176,6 +233,24 @@ class Game {
 
     nextPlayerIndex = (nextPlayerIndex % this.players.length + this.players.length) % this.players.length;
     this.currentPlayerIndex = nextPlayerIndex;
+
+    const newCurrentPlayer = this.players[this.currentPlayerIndex];
+    if (
+      this.countdownState.ownerId &&
+      newCurrentPlayer &&
+      newCurrentPlayer.id === this.countdownState.ownerId
+    ) {
+      this.countdownState.number--;
+      this.discardPile[0].rank = String(this.countdownState.number);
+      this.discardPile[0].isCountdown = true;
+      
+      if (this.countdownState.number === 0) {
+        return 'countdown-win';
+      }
+      return 'countdown-upgraded';
+    }
+
+    return null;
   }
 
   checkWinCondition(socketId) {

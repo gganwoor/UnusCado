@@ -8,6 +8,11 @@ interface PlayerInfo {
   handSize: number;
 }
 
+interface CountdownState {
+  ownerId: string | null;
+  number: number | null;
+}
+
 interface InfoPanelProps {
   gameId: string | null;
   isConnected: boolean;
@@ -18,6 +23,7 @@ interface InfoPanelProps {
   winnerId: string | null;
   onStartGame: () => void;
   isMyTurn: boolean;
+  countdownState: CountdownState | null;
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
@@ -30,14 +36,19 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   winnerId,
   onStartGame,
   isMyTurn,
+  countdownState,
 }) => {
+  const countdownOwner = countdownState?.ownerId ? players.find(p => p.id === countdownState.ownerId) : null;
+
   return (
     <header className="App-header">
       <div className="info-panel">
         <h1>Unus Cado</h1>
         {gameId && <p className="game-id">Game ID: {gameId}</p>}
-        {isConnected && myPlayerId && players.length > 0 && (
-          <p>You are: {players.find(p => p.id === myPlayerId)?.name}</p>
+        {countdownState && countdownState.number !== null && (
+          <p className="countdown-status">
+            Countdown: {countdownState.number} (Owner: {countdownOwner?.name || 'Unknown'})
+          </p>
         )}
         <p>
           {isConnected && myPlayerId && currentPlayerId && (

@@ -5,6 +5,8 @@ import './PlayerHand.scss';
 interface CardData {
   suit: string;
   rank: string;
+  color?: string;
+  isCountdown?: boolean;
 }
 
 interface PlayerHandProps {
@@ -19,13 +21,14 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard }) =
       <div className="Card-list">
         {hand.map((card, index) => (
           <Card 
-            key={index} 
+            key={`${card.suit}-${card.rank}-${index}`}
             suit={card.suit} 
             rank={card.rank} 
+            color={card.color}
+            isCountdown={card.isCountdown}
             onClick={() => onPlayCard(card)} 
             className={isMyTurn ? '' : 'not-my-turn'} 
-          />
-        ))}
+          />        ))}
       </div>
     </div>
   );

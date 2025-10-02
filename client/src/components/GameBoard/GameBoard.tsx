@@ -5,6 +5,8 @@ import './GameBoard.scss';
 interface CardData {
   suit: string;
   rank: string;
+  color?: string;
+  isCountdown?: boolean;
 }
 
 interface GameBoardProps {
@@ -19,7 +21,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTu
     <>
       <div className="Discard-pile">
         {discardPile.length > 0 ? (
-          <Card suit={discardPile[0].suit} rank={discardPile[0].rank} />
+          <Card 
+            suit={discardPile[0].suit} 
+            rank={discardPile[0].rank} 
+            color={discardPile[0].color}
+            isCountdown={discardPile[0].isCountdown}
+          />
         ) : (
           <Card suit="" rank="" className="empty" />
         )}

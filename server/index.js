@@ -11,6 +11,7 @@ if (process.env.CLIENT_URL) {
 }
 
 const io = new Server(server, {
+  pingTimeout: 20000,
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"]
@@ -29,6 +30,13 @@ app.get('/', (req, res) => {
   res.send('<h1>Unus Cado Server</h1>');
 });
 
+const notifyGameStateUpdate = (game) => {
+  if (!game) return;
+  game.players.forEach(p => {
+    io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+  });
+};
+
 io.on('connection', (socket) => {
   console.log(`A user connected: ${socket.id}`);
 
@@ -46,7 +54,7 @@ io.on('connection', (socket) => {
     
     console.log(`Player ${socket.id} created game ${gameId}`);
     socket.emit('game-created', { gameId });
-    socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
+    notifyGameStateUpdate(game);
   });
 
   socket.on('join-game', ({ gameId, playerName }) => {
@@ -60,39 +68,44 @@ io.on('connection', (socket) => {
     game.addPlayer(socket.id, playerName || `Player ${game.players.length + 1}`);
 
     console.log(`Player ${socket.id} joined game ${gameId}`);
-    
-    game.players.forEach(p => {
-      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-    });
+    notifyGameStateUpdate(game);
   });
 
   socket.on('start-game', () => {
-    const gameId = socket.gameId;
-    const game = games[gameId];
+    const game = games[socket.gameId];
     if (!game) return;
 
     game.startGame();
-    game.players.forEach(p => {
-      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-    });
+    notifyGameStateUpdate(game);
   });
 
+  const handleTurnAdvancement = (game, socket) => {
+    const turnResult = game.advanceTurn();
+    if (turnResult === 'countdown-win') {
+      io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
+    } else {
+      notifyGameStateUpdate(game);
+      if (game.checkWinCondition(socket.id)) {
+        io.to(game.gameId).emit('game-over', { winnerId: socket.id });
+      }
+    }
+  };
+
   socket.on('play-card', (cardToPlay) => {
-    const gameId = socket.gameId;
-    const game = games[gameId];
+    const game = games[socket.gameId];
     if (!game) return;
 
     const result = game.playCard(socket.id, cardToPlay);
 
-    if (result === 'choose-suit') {
+    if (result === 'countdown-win') {
+      io.to(game.gameId).emit('game-over', { winnerId: socket.id });
+    } else if (result === 'choose-suit') {
       socket.emit('choose-suit');
-    } else if (result) {
-      game.players.forEach(p => {
-        io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-      });
-
-      if (game.checkWinCondition(socket.id)) {
-        io.to(gameId).emit('game-over', { winnerId: socket.id });
+    } else if (result === true) {
+      if (cardToPlay.rank === 'K') {
+        notifyGameStateUpdate(game);
+      } else {
+        handleTurnAdvancement(game, socket);
       }
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
@@ -100,37 +113,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('suit-chosen', ({ chosenSuit }) => {
-    const gameId = socket.gameId;
-    const game = games[gameId];
+    const game = games[socket.gameId];
     if (!game) return;
 
     if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
       const { card } = game.pendingSuitChange;
       card.suit = chosenSuit;
       game.pendingSuitChange = null;
-      game.advanceTurn();
-
-      game.players.forEach(p => {
-        io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-      });
-
-      if (game.checkWinCondition(socket.id)) {
-        io.to(gameId).emit('game-over', { winnerId: socket.id });
-      }
+      handleTurnAdvancement(game, socket);
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
   });
 
   socket.on('draw-card', () => {
-    const gameId = socket.gameId;
-    const game = games[gameId];
+    const game = games[socket.gameId];
     if (!game) return;
 
     if (game.drawCard(socket.id)) {
-      game.players.forEach(p => {
-        io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-      });
+      handleTurnAdvancement(game, socket);
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
@@ -167,9 +168,7 @@ io.on('connection', (socket) => {
     
     game.currentPlayerIndex = (game.currentPlayerIndex + game.players.length) % game.players.length;
 
-    game.players.forEach(p => {
-      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
-    });
+    notifyGameStateUpdate(game);
   });
 });
 

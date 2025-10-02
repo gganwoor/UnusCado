@@ -12,6 +12,8 @@ import SuitChooser from './components/SuitChooser/SuitChooser';
 interface CardData {
   suit: string;
   rank: string;
+  color?: string;
+  isCountdown?: boolean;
 }
 
 interface PlayerInfo {
@@ -23,6 +25,7 @@ interface PlayerInfo {
 interface AppState {
   gameId: string | null;
   gameError: string | null;
+  countdownState: { ownerId: string | null; number: number | null; } | null;
   isConnected: boolean;
   myPlayerId: string | null;
   currentPlayerId: string | null;
@@ -51,6 +54,7 @@ type AppAction =
 const initialState: AppState = {
   gameId: null,
   gameError: null,
+  countdownState: null,
   isConnected: false,
   myPlayerId: null,
   currentPlayerId: null,
@@ -81,6 +85,7 @@ function gameReducer(state: AppState, action: AppAction): AppState {
         currentPlayerId: action.payload.currentPlayerId,
         attackStack: action.payload.attackStack,
         players: action.payload.players,
+        countdownState: action.payload.countdownState,
         winnerId: null,
         showSuitChooser: false,
         pendingSuitChangeCard: null,
@@ -206,7 +211,8 @@ function App() {
         <>
           <InfoPanel
             gameId={state.gameId}
-            isConnected={state.isConnected}
+            countdownState={state.countdownState}
+            isConnected={state.isConnected}            
             myPlayerId={state.myPlayerId}
             currentPlayerId={state.currentPlayerId}
             players={state.players}
