@@ -5,9 +5,14 @@ const Game = require('./src/Game');
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });

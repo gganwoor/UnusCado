@@ -117,7 +117,8 @@ function App() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socket: Socket = io('http://localhost:4000');
+    const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:4000';
+    const socket: Socket = io(serverUrl);
     socketRef.current = socket;
 
     dispatch({ type: 'SET_CONNECTION_STATUS', payload: socket.connected });
