@@ -110,7 +110,7 @@ class Game {
 
         this.applySpecialCardEffect(playedCard, socketId);
 
-        if (playedCard.rank !== 'K' && playedCard.rank !== 'A') { 
+        if (playedCard.rank !== 'K') { 
           this.advanceTurn();
         }
 
