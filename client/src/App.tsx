@@ -1,6 +1,8 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
 import './App.scss';
+
+import Lobby from './components/Lobby/Lobby';
 import InfoPanel from './components/InfoPanel/InfoPanel';
 import PlayerHand from './components/PlayerHand/PlayerHand';
 import OtherPlayers from './components/OtherPlayers/OtherPlayers';
@@ -19,6 +21,8 @@ interface PlayerInfo {
 }
 
 interface AppState {
+  gameId: string | null;
+  gameError: string | null;
   isConnected: boolean;
   myPlayerId: string | null;
   currentPlayerId: string | null;
@@ -35,7 +39,9 @@ interface AppState {
 type AppAction =
   | { type: 'SET_CONNECTION_STATUS'; payload: boolean }
   | { type: 'SET_MY_PLAYER_ID'; payload: string | null }
-  | { type: 'GAME_STATE_UPDATE'; payload: any }
+  | { type: 'GAME_STATE_UPDATE'; payload: any } 
+  | { type: 'GAME_CREATED'; payload: string }
+  | { type: 'SET_GAME_ERROR'; payload: string | null }
   | { type: 'GAME_OVER'; payload: string }
   | { type: 'CHOOSE_SUIT' }
   | { type: 'PLAY_CARD_PENDING'; payload: CardData }
@@ -43,6 +49,8 @@ type AppAction =
   | { type: 'START_GAME_PENDING' };
 
 const initialState: AppState = {
+  gameId: null,
+  gameError: null,
   isConnected: false,
   myPlayerId: null,
   currentPlayerId: null,
@@ -65,6 +73,7 @@ function gameReducer(state: AppState, action: AppAction): AppState {
     case 'GAME_STATE_UPDATE':
       return {
         ...state,
+        gameId: action.payload.gameId,
         myPlayerId: action.payload.myPlayerId,
         playerHand: action.payload.playerHand,
         discardPile: action.payload.discardPile,
@@ -75,7 +84,12 @@ function gameReducer(state: AppState, action: AppAction): AppState {
         winnerId: null,
         showSuitChooser: false,
         pendingSuitChangeCard: null,
+        gameError: null,
       };
+    case 'GAME_CREATED':
+      return { ...state, gameId: action.payload, gameError: null };
+    case 'SET_GAME_ERROR':
+      return { ...state, gameError: action.payload };
     case 'GAME_OVER':
       return { ...state, winnerId: action.payload };
     case 'CHOOSE_SUIT':
@@ -115,11 +129,18 @@ function App() {
 
     socket.on('disconnect', () => {
       dispatch({ type: 'SET_CONNECTION_STATUS', payload: false });
-      dispatch({ type: 'SET_MY_PLAYER_ID', payload: null });
     });
 
     socket.on('game-state-update', (gameState: any) => {
       dispatch({ type: 'GAME_STATE_UPDATE', payload: gameState });
+    });
+
+    socket.on('game-created', ({ gameId }) => {
+      dispatch({ type: 'GAME_CREATED', payload: gameId });
+    });
+
+    socket.on('unknown-game', () => {
+      dispatch({ type: 'SET_GAME_ERROR', payload: 'Game not found. Please check the ID.' });
     });
 
     socket.on('game-over', (data: { winnerId: string }) => {
@@ -135,7 +156,13 @@ function App() {
     };
   }, []);
 
-  const isMyTurn = state.myPlayerId === state.currentPlayerId;
+  const handleCreateGame = (playerName: string) => {
+    socketRef.current?.emit('create-game', { playerName });
+  };
+
+  const handleJoinGame = (gameId: string, playerName: string) => {
+    socketRef.current?.emit('join-game', { gameId, playerName });
+  };
 
   const handlePlayCard = (card: CardData) => {
     if (!isMyTurn || !socketRef.current) return;
@@ -165,38 +192,50 @@ function App() {
     socketRef.current.emit('start-game');
   };
 
+  const isMyTurn = state.myPlayerId === state.currentPlayerId;
+
   return (
     <div className="App">
-      <InfoPanel
-        isConnected={state.isConnected}
-        myPlayerId={state.myPlayerId}
-        currentPlayerId={state.currentPlayerId}
-        players={state.players}
-        attackStack={state.attackStack}
-        winnerId={state.winnerId}
-        onStartGame={startGame}
-        isMyTurn={isMyTurn}
-      />
-      <div className="Game-board">
-        <OtherPlayers players={state.players} myPlayerId={state.myPlayerId} />
-        <GameBoard
-          discardPile={state.discardPile}
-          drawPileSize={state.drawPileSize}
-          isMyTurn={isMyTurn}
-          onDrawCard={handleDrawCard}
+      {!state.gameId ? (
+        <Lobby 
+          onCreateGame={handleCreateGame} 
+          onJoinGame={handleJoinGame} 
         />
-        <PlayerHand
-          hand={state.playerHand}
-          isMyTurn={isMyTurn}
-          onPlayCard={handlePlayCard}
-        />
-        {state.showSuitChooser && (
-          <SuitChooser
-            pendingCardRank={state.pendingSuitChangeCard?.rank}
-            onSuitChoice={handleSuitChoice}
+      ) : (
+        <>
+          <InfoPanel
+            gameId={state.gameId}
+            isConnected={state.isConnected}
+            myPlayerId={state.myPlayerId}
+            currentPlayerId={state.currentPlayerId}
+            players={state.players}
+            attackStack={state.attackStack}
+            winnerId={state.winnerId}
+            onStartGame={startGame}
+            isMyTurn={isMyTurn}
           />
-        )}
-      </div>
+          <div className="Game-board">
+            <OtherPlayers players={state.players} myPlayerId={state.myPlayerId} />
+            <GameBoard
+              discardPile={state.discardPile}
+              drawPileSize={state.drawPileSize}
+              isMyTurn={isMyTurn}
+              onDrawCard={handleDrawCard}
+            />
+            <PlayerHand
+              hand={state.playerHand}
+              isMyTurn={isMyTurn}
+              onPlayCard={handlePlayCard}
+            />
+            {state.showSuitChooser && (
+              <SuitChooser
+                pendingCardRank={state.pendingSuitChangeCard?.rank}
+                onSuitChoice={handleSuitChoice}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

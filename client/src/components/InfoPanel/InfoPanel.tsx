@@ -1,6 +1,7 @@
 import React from 'react';
 import './InfoPanel.scss';
 
+
 interface PlayerInfo {
   id: string;
   name: string;
@@ -8,6 +9,7 @@ interface PlayerInfo {
 }
 
 interface InfoPanelProps {
+  gameId: string | null;
   isConnected: boolean;
   myPlayerId: string | null;
   currentPlayerId: string | null;
@@ -19,6 +21,7 @@ interface InfoPanelProps {
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
+  gameId,
   isConnected,
   myPlayerId,
   currentPlayerId,
@@ -32,6 +35,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     <header className="App-header">
       <div className="info-panel">
         <h1>Unus Cado</h1>
+        {gameId && <p className="game-id">Game ID: {gameId}</p>}
         {isConnected && myPlayerId && players.length > 0 && (
           <p>You are: {players.find(p => p.id === myPlayerId)?.name}</p>
         )}

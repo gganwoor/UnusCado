@@ -15,27 +15,57 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 4000;
 
 const games = {};
-const players = {};
+
+const generateGameId = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
 
 app.get('/', (req, res) => {
   res.send('<h1>Unus Cado Server</h1>');
 });
 
 io.on('connection', (socket) => {
-  const GAME_ID = 'defaultGame';
-  if (!games[GAME_ID]) {
-    games[GAME_ID] = new Game(GAME_ID);
-  }
-  const game = games[GAME_ID];
+  console.log(`A user connected: ${socket.id}`);
 
-  const playerName = `Player ${game.players.length + 1}`;
-  game.addPlayer(socket.id, playerName);
-  players[socket.id] = { gameId: GAME_ID, name: playerName };
-  socket.join(GAME_ID);
+  socket.on('create-game', ({ playerName }) => {
+    let gameId = generateGameId();
+    while(games[gameId]) {
+        gameId = generateGameId();
+    }
+    const game = new Game(gameId);
+    games[gameId] = game;
 
-  socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
+    socket.join(gameId);
+    socket.gameId = gameId;
+    game.addPlayer(socket.id, playerName || `Player 1`);
+    
+    console.log(`Player ${socket.id} created game ${gameId}`);
+    socket.emit('game-created', { gameId });
+    socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
+  });
+
+  socket.on('join-game', ({ gameId, playerName }) => {
+    const game = games[gameId];
+    if (!game) {
+      return socket.emit('unknown-game');
+    }
+
+    socket.join(gameId);
+    socket.gameId = gameId;
+    game.addPlayer(socket.id, playerName || `Player ${game.players.length + 1}`);
+
+    console.log(`Player ${socket.id} joined game ${gameId}`);
+    
+    game.players.forEach(p => {
+      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+    });
+  });
 
   socket.on('start-game', () => {
+    const gameId = socket.gameId;
+    const game = games[gameId];
+    if (!game) return;
+
     game.startGame();
     game.players.forEach(p => {
       io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
@@ -43,6 +73,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('play-card', (cardToPlay) => {
+    const gameId = socket.gameId;
+    const game = games[gameId];
+    if (!game) return;
+
     const result = game.playCard(socket.id, cardToPlay);
 
     if (result === 'choose-suit') {
@@ -53,7 +87,7 @@ io.on('connection', (socket) => {
       });
 
       if (game.checkWinCondition(socket.id)) {
-        io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
+        io.to(gameId).emit('game-over', { winnerId: socket.id });
       }
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
@@ -61,6 +95,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('suit-chosen', ({ chosenSuit }) => {
+    const gameId = socket.gameId;
+    const game = games[gameId];
+    if (!game) return;
+
     if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
       const { card } = game.pendingSuitChange;
       card.suit = chosenSuit;
@@ -72,7 +110,7 @@ io.on('connection', (socket) => {
       });
 
       if (game.checkWinCondition(socket.id)) {
-        io.to(GAME_ID).emit('game-over', { winnerId: socket.id });
+        io.to(gameId).emit('game-over', { winnerId: socket.id });
       }
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
@@ -80,6 +118,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('draw-card', () => {
+    const gameId = socket.gameId;
+    const game = games[gameId];
+    if (!game) return;
+
     if (game.drawCard(socket.id)) {
       game.players.forEach(p => {
         io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
@@ -90,16 +132,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    console.log(`A user disconnected: ${socket.id}`);
+    const gameId = socket.gameId;
+    if (!gameId) return;
+
+    const game = games[gameId];
+    if (!game) return;
+
     const disconnectedPlayerIndex = game.players.findIndex(p => p.id === socket.id);
     if (disconnectedPlayerIndex === -1) return;
 
     const wasCurrentPlayer = game.currentPlayerIndex === disconnectedPlayerIndex;
     
     game.removePlayer(socket.id);
-    delete players[socket.id];
 
     if (game.players.length === 0) {
-      delete games[GAME_ID];
+      console.log(`Game ${gameId} is empty, deleting.`);
+      delete games[gameId];
       return; 
     }
 
