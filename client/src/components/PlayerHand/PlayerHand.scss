@@ -21,3 +21,14 @@
     }
   }
 }
+
+.Player-hand .Card-list .card-container.playable {
+  border: 2px solid yellow;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px yellow;
+}
+
+.Player-hand .Card-list .card-container.playable:hover {
+  transform: translateY(-10px);
+}

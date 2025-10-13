@@ -9,26 +9,79 @@ interface CardData {
   isCountdown?: boolean;
 }
 
+interface CountdownState {
+  ownerId: string | null;
+  number: number | null;
+}
+
 interface PlayerHandProps {
   hand: CardData[];
   isMyTurn: boolean;
   onPlayCard: (card: CardData) => void;
+  discardPile: CardData[];
+  countdownState: CountdownState | null;
 }
 
-const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard }) => {
+const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard, discardPile, countdownState }) => {
+  const isCardPlayable = (cardToPlay: CardData): boolean => {
+    if (discardPile.length === 0) {
+      return true;
+    }
+
+    const topCard = discardPile[0];
+    let isValidPlay = false;
+
+    const topIsCountdown = topCard && topCard.isCountdown;
+    const countdownNumber = countdownState?.number;
+
+    if (topIsCountdown && countdownNumber !== null && countdownNumber !== undefined) {
+      const isPlayedCardCountdown = cardToPlay.isCountdown;
+      let isInterruptPlay = false;
+      const playedRank = cardToPlay.rank;
+
+      if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
+        isInterruptPlay = true;
+      } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
+        isInterruptPlay = true;
+      } else if (countdownNumber === 1 && playedRank === 'A') {
+        isInterruptPlay = true;
+      }
+
+      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
+        isValidPlay = true;
+      } else if (isInterruptPlay) {
+        isValidPlay = true;
+      }
+    } else {
+      if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
+        isValidPlay = true;
+      } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
+        isValidPlay = true;
+      }
+    }
+
+    return isValidPlay;
+  };
+
   return (
     <div className="Player-hand">
       <div className="Card-list">
-        {hand.map((card, index) => (
-          <Card 
-            key={`${card.suit}-${card.rank}-${index}`}
-            suit={card.suit} 
-            rank={card.rank} 
-            color={card.color}
-            isCountdown={card.isCountdown}
-            onClick={() => onPlayCard(card)} 
-            className={isMyTurn ? '' : 'not-my-turn'} 
-          />        ))}
+        {hand.map((card, index) => {
+          const playable = isMyTurn && isCardPlayable(card);
+          const cardClassName = `${isMyTurn ? '' : 'not-my-turn'} ${playable ? 'playable' : ''}`;
+
+          return (
+            <Card 
+              key={`${card.suit}-${card.rank}-${index}`}
+              suit={card.suit} 
+              rank={card.rank} 
+              color={card.color}
+              isCountdown={card.isCountdown}
+              onClick={() => onPlayCard(card)} 
+              className={cardClassName}
+            />
+          );
+        })}
       </div>
     </div>
   );

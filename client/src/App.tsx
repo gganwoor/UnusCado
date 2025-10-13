@@ -233,6 +233,8 @@ function App() {
               hand={state.playerHand}
               isMyTurn={isMyTurn}
               onPlayCard={handlePlayCard}
+              discardPile={state.discardPile}
+              countdownState={state.countdownState}
             />
             {state.showSuitChooser && (
               <SuitChooser
