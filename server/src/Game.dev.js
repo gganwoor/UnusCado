@@ -67,8 +67,21 @@ class Game {
       [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
     }
 
-    this.players.forEach(p => {
-      p.hand = this.deck.splice(0, 7);
+    this.players.forEach((p, index) => {
+      if (index === 0) { // 플레이어 1
+        p.hand = this.deck.filter(c => c.isCountdown && c.rank === '3');
+        p.hand.push(...this.deck.splice(0, 6)); // 나머지 6장 랜덤
+      } else if (index === 1) { // 플레이어 2
+        p.hand = [
+          { suit: '♥', rank: 'A', color: 'Red' },
+          { suit: '♦', rank: '2', color: 'Red' },
+          { suit: '♣', rank: '3', color: 'Black' },
+          { suit: '♠', rank: '4', color: 'Black' },
+        ];
+        p.hand.push(...this.deck.splice(0, 3)); // 나머지 3장 랜덤
+      } else {
+        p.hand = this.deck.splice(0, 7); // 다른 플레이어
+      }
     });
 
     this.discardPile = this.deck.splice(0, 1);
@@ -105,8 +118,12 @@ class Game {
   }
 
   playCard(socketId, cardToPlay) {
+    console.log(`\n--- DEBUG: playCard called by ${socketId} ---`);
+    console.log('Card to play:', cardToPlay);
+
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
+      console.log('DEBUG: Invalid player or not current player. Returning false.');
       return false;
     }
 
@@ -115,13 +132,18 @@ class Game {
       card.rank === cardToPlay.rank &&
       !!card.isCountdown === !!cardToPlay.isCountdown
     );
-    if (cardIndex === -1) return false;
+    if (cardIndex === -1) {
+      console.log('DEBUG: Card not found in hand. Returning false.');
+      return false;
+    }
 
     const topCard = this.discardPile[0];
     let isValidPlay = false;
     let isInterrupt = false;
+    console.log('DEBUG: Top card on discard pile:', topCard);
 
     const topIsCountdown = topCard && topCard.isCountdown;
+    console.log(`DEBUG: topIsCountdown = ${topIsCountdown}`);
 
     if (topIsCountdown && this.countdownState.number !== null) {
       const isPlayedCardCountdown = cardToPlay.isCountdown;
@@ -151,6 +173,8 @@ class Game {
       }
     }
 
+    console.log(`DEBUG: isValidPlay = ${isValidPlay}`);
+
     if (isValidPlay) {
       const playedCard = player.hand.splice(cardIndex, 1)[0];
       this.discardPile.unshift(playedCard);
@@ -158,6 +182,7 @@ class Game {
       if (playedCard.isCountdown) {
         this.countdownState = { ownerId: socketId, number: parseInt(playedCard.rank, 10) };
         if (playedCard.rank === '0') {
+          console.log('DEBUG: Returning countdown-win');
           return 'countdown-win';
         }
       } else if (isInterrupt) {
@@ -169,11 +194,14 @@ class Game {
       
       if (playedCard.rank === '7' && !isInterrupt) {
         this.pendingSuitChange = { card: playedCard, playerId: socketId };
+        console.log('DEBUG: Returning choose-suit');
         return 'choose-suit';
       }
 
+      console.log('DEBUG: Returning true');
       return true;
     } else {
+      console.log('DEBUG: isValidPlay is false. Returning false.');
       return false;
     }
   }

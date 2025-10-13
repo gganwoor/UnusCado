@@ -1,7 +1,15 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
-const Game = require('./src/Game');
+const isDevMode = process.env.NODE_ENV === 'development';
+const Game = isDevMode
+  ? require('./src/Game.dev')
+  : require('./src/Game');
+
+if (isDevMode) {
+  console.log('\n!!! DEVELOPMENT MODE ACTIVE !!!');
+  console.log('!!! Using Game.dev.js with fixed card hands for testing. !!!\n');
+}
 
 const app = express();
 const server = http.createServer(app);
