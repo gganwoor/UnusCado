@@ -22,13 +22,36 @@
   }
 }
 
+@keyframes pulse-yellow {
+  0% { box-shadow: 0 0 8px yellow; }
+  50% { box-shadow: 0 0 16px yellow, 0 0 20px yellow; }
+  100% { box-shadow: 0 0 8px yellow; }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 8px red; }
+  50% { box-shadow: 0 0 16px red, 0 0 20px red; }
+  100% { box-shadow: 0 0 8px red; }
+}
+
 .Player-hand .Card-list .card-container.playable {
   border: 2px solid yellow;
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 0 10px yellow;
+  animation: pulse-yellow 1.5s infinite;
 }
 
 .Player-hand .Card-list .card-container.playable:hover {
+  transform: translateY(-10px);
+}
+
+.Player-hand .Card-list .card-container.playable-attack {
+  border: 2px solid red;
+  border-radius: 8px;
+  cursor: pointer;
+  animation: pulse-red 1.5s infinite;
+}
+
+.Player-hand .Card-list .card-container.playable-attack:hover {
   transform: translateY(-10px);
 }

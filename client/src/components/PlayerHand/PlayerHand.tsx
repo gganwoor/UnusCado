@@ -20,9 +20,10 @@ interface PlayerHandProps {
   onPlayCard: (card: CardData) => void;
   discardPile: CardData[];
   countdownState: CountdownState | null;
+  attackStack: number;
 }
 
-const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard, discardPile, countdownState }) => {
+const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard, discardPile, countdownState, attackStack }) => {
   const isCardPlayable = (cardToPlay: CardData): boolean => {
     if (discardPile.length === 0) {
       return true;
@@ -31,32 +32,46 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard, dis
     const topCard = discardPile[0];
     let isValidPlay = false;
 
-    const topIsCountdown = topCard && topCard.isCountdown;
-    const countdownNumber = countdownState?.number;
+    if (attackStack > 0) {
+      const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
+      const isDefenseCard = cardToPlay.rank === '3';
+      const isCountdownCard = cardToPlay.isCountdown && cardToPlay.rank === '3';
 
-    if (topIsCountdown && countdownNumber !== null && countdownNumber !== undefined) {
-      const isPlayedCardCountdown = cardToPlay.isCountdown;
-      let isInterruptPlay = false;
-      const playedRank = cardToPlay.rank;
-
-      if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
-        isInterruptPlay = true;
-      } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
-        isInterruptPlay = true;
-      } else if (countdownNumber === 1 && playedRank === 'A') {
-        isInterruptPlay = true;
-      }
-
-      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
-        isValidPlay = true;
-      } else if (isInterruptPlay) {
-        isValidPlay = true;
+      if (isAttackCard || isDefenseCard || isCountdownCard) {
+        if ((cardToPlay.rank === 'Joker') || (cardToPlay.isCountdown && cardToPlay.rank === '3')) {
+          isValidPlay = true;
+        } else if (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit)) {
+          isValidPlay = true;
+        }
       }
     } else {
-      if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
-        isValidPlay = true;
-      } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
-        isValidPlay = true;
+      const topIsCountdown = topCard && topCard.isCountdown;
+      const countdownNumber = countdownState?.number;
+
+      if (topIsCountdown && countdownNumber !== null && countdownNumber !== undefined) {
+        const isPlayedCardCountdown = cardToPlay.isCountdown;
+        let isInterruptPlay = false;
+        const playedRank = cardToPlay.rank;
+
+        if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 1 && playedRank === 'A') {
+          isInterruptPlay = true;
+        }
+
+        if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
+          isValidPlay = true;
+        } else if (isInterruptPlay) {
+          isValidPlay = true;
+        }
+      } else {
+        if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
+          isValidPlay = true;
+        } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
+          isValidPlay = true;
+        }
       }
     }
 
@@ -68,7 +83,11 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ hand, isMyTurn, onPlayCard, dis
       <div className="Card-list">
         {hand.map((card, index) => {
           const playable = isMyTurn && isCardPlayable(card);
-          const cardClassName = `${isMyTurn ? '' : 'not-my-turn'} ${playable ? 'playable' : ''}`;
+          let playableClass = '';
+          if (playable) {
+            playableClass = attackStack > 0 ? 'playable-attack' : 'playable';
+          }
+          const cardClassName = `${isMyTurn ? '' : 'not-my-turn'} ${playableClass}`;
 
           return (
             <Card 

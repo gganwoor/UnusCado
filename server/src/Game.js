@@ -121,33 +121,47 @@ class Game {
     let isValidPlay = false;
     let isInterrupt = false;
 
-    const topIsCountdown = topCard && topCard.isCountdown;
+    if (this.attackStack > 0) {
+      const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
+      const isDefenseCard = cardToPlay.rank === '3';
+      const isCountdownCard = cardToPlay.isCountdown && cardToPlay.rank === '3';
 
-    if (topIsCountdown && this.countdownState.number !== null) {
-      const isPlayedCardCountdown = cardToPlay.isCountdown;
-      let isInterruptPlay = false;
-      const playedRank = cardToPlay.rank;
-      const countdownNumber = this.countdownState.number;
-
-      if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
-        isInterruptPlay = true;
-      } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
-        isInterruptPlay = true;
-      } else if (countdownNumber === 1 && playedRank === 'A') {
-        isInterruptPlay = true;
-      }
-
-      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
-        isValidPlay = true;
-      } else if (isInterruptPlay) {
-        isValidPlay = true;
-        isInterrupt = true;
+      if (isAttackCard || isDefenseCard || isCountdownCard) {
+        if ((cardToPlay.rank === 'Joker') || (cardToPlay.isCountdown && cardToPlay.rank === '3')) {
+          isValidPlay = true;
+        } else if (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit)) {
+          isValidPlay = true;
+        }
       }
     } else {
-      if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
-        isValidPlay = true;
-      } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
-        isValidPlay = true;
+      const topIsCountdown = topCard && topCard.isCountdown;
+
+      if (topIsCountdown && this.countdownState.number !== null) {
+        const isPlayedCardCountdown = cardToPlay.isCountdown;
+        let isInterruptPlay = false;
+        const playedRank = cardToPlay.rank;
+        const countdownNumber = this.countdownState.number;
+
+        if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 1 && playedRank === 'A') {
+          isInterruptPlay = true;
+        }
+
+        if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
+          isValidPlay = true;
+        } else if (isInterruptPlay) {
+          isValidPlay = true;
+          isInterrupt = true;
+        }
+      } else {
+        if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
+          isValidPlay = true;
+        } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
+          isValidPlay = true;
+        }
       }
     }
 

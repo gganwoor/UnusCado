@@ -49,3 +49,27 @@
     }
   }
 }
+
+@keyframes pulse-yellow {
+  0% { box-shadow: 0 0 8px yellow; }
+  50% { box-shadow: 0 0 16px yellow, 0 0 20px yellow; }
+  100% { box-shadow: 0 0 8px yellow; }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 8px red; }
+  50% { box-shadow: 0 0 16px red, 0 0 20px red; }
+  100% { box-shadow: 0 0 8px red; }
+}
+
+.draw-pile-stack.must-draw-normal .top-card {
+  border: 2px solid yellow;
+  border-radius: 8px;
+  animation: pulse-yellow 1.5s infinite;
+}
+
+.draw-pile-stack.must-draw-attack .top-card {
+  border: 2px solid red;
+  border-radius: 8px;
+  animation: pulse-red 1.5s infinite;
+}

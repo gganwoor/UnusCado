@@ -200,6 +200,63 @@ function App() {
 
   const isMyTurn = state.myPlayerId === state.currentPlayerId;
 
+  const isCardPlayable = (cardToPlay: CardData): boolean => {
+    if (state.discardPile.length === 0) {
+      return true;
+    }
+
+    const topCard = state.discardPile[0];
+    let isValidPlay = false;
+
+    if (state.attackStack > 0) {
+      const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
+      const isDefenseCard = cardToPlay.rank === '3';
+      const isCountdownCard = cardToPlay.isCountdown && cardToPlay.rank === '3';
+
+      if (isAttackCard || isDefenseCard || isCountdownCard) {
+        if ((cardToPlay.rank === 'Joker') || (cardToPlay.isCountdown && cardToPlay.rank === '3')) {
+          isValidPlay = true;
+        } else if (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit)) {
+          isValidPlay = true;
+        }
+      }
+    } else {
+      const topIsCountdown = topCard && topCard.isCountdown;
+      const countdownNumber = state.countdownState?.number;
+
+      if (topIsCountdown && countdownNumber !== null && countdownNumber !== undefined) {
+        const isPlayedCardCountdown = cardToPlay.isCountdown;
+        let isInterruptPlay = false;
+        const playedRank = cardToPlay.rank;
+
+        if (countdownNumber === 3 && ['A', '2', '3', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) {
+          isInterruptPlay = true;
+        } else if (countdownNumber === 1 && playedRank === 'A') {
+          isInterruptPlay = true;
+        }
+
+        if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
+          isValidPlay = true;
+        } else if (isInterruptPlay) {
+          isValidPlay = true;
+        }
+      } else {
+        if (cardToPlay.isCountdown && cardToPlay.rank === '3') {
+          isValidPlay = true;
+        } else if (cardToPlay.rank === 'Joker' || (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit))) {
+          isValidPlay = true;
+        }
+      }
+    }
+
+    return isValidPlay;
+  };
+
+  const hasPlayableCard = state.playerHand.some(isCardPlayable);
+  const mustDraw = isMyTurn && !hasPlayableCard;
+
   return (
     <div className="App">
       {!state.gameId ? (
@@ -228,6 +285,8 @@ function App() {
               drawPileSize={state.drawPileSize}
               isMyTurn={isMyTurn}
               onDrawCard={handleDrawCard}
+              mustDraw={mustDraw}
+              attackStack={state.attackStack}
             />
             <PlayerHand
               hand={state.playerHand}
@@ -235,6 +294,7 @@ function App() {
               onPlayCard={handlePlayCard}
               discardPile={state.discardPile}
               countdownState={state.countdownState}
+              attackStack={state.attackStack}
             />
             {state.showSuitChooser && (
               <SuitChooser
