@@ -38,7 +38,7 @@
   border: 2px solid yellow;
   border-radius: 8px;
   cursor: pointer;
-  animation: pulse-yellow 1.5s infinite;
+  animation: pulse-yellow 2s infinite;
 }
 
 .Player-hand .Card-list .card-container.playable:hover {
@@ -49,7 +49,7 @@
   border: 2px solid red;
   border-radius: 8px;
   cursor: pointer;
-  animation: pulse-red 1.5s infinite;
+  animation: pulse-red 2s infinite;
 }
 
 .Player-hand .Card-list .card-container.playable-attack:hover {

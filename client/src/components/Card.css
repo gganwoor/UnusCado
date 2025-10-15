@@ -16,7 +16,7 @@
 }
 
 .card-container:hover {
-  transform: translateY(-5px);
+  transform: translateY(-10px);
 }
 
 .card-image {
