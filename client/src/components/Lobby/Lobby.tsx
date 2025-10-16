@@ -19,7 +19,7 @@ const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onCreateSingleP
 
   const handleJoin = () => {
     if (playerName && gameId) {
-      onJoinGame(gameId.toUpperCase(), playerName);
+      onJoinGame(gameId, playerName);
     }
   };
 
