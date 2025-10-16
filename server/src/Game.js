@@ -99,7 +99,7 @@ class Game {
 
   _isCardPlayable(cardToPlay) {
     const topCard = this.discardPile[0];
-    if (!topCard) return true; 
+    if (!topCard) return true;
 
     if (this.attackStack > 0) {
       const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
@@ -128,10 +128,14 @@ class Game {
       else if (countdownNumber === 2 && ['A', '2', 'Joker'].includes(playedRank)) isInterruptPlay = true;
       else if (countdownNumber === 1 && playedRank === 'A') isInterruptPlay = true;
 
-      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) return true;
-      if (isInterruptPlay) return true;
+      if (isPlayedCardCountdown && parseInt(cardToPlay.rank, 10) === countdownNumber - 1) {
+        return true;
+      }
+      if (isInterruptPlay) {
+        return true;
+      }
       
-      return false;
+      return false; 
     }
 
     if (cardToPlay.isCountdown && cardToPlay.rank === '3') return true;
@@ -244,7 +248,6 @@ class Game {
 
     this.updateLastActivity();
 
-    
     if (this.attackStack > 0) {
       const defenseCard = currentPlayer.hand.find(card => this._isCardPlayable(card));
       if (defenseCard) {
@@ -258,13 +261,12 @@ class Game {
       }
     }
 
-    
     const playableCards = currentPlayer.hand.filter(card => this._isCardPlayable(card));
     if (playableCards.length > 0) {
-      
+
       let cardToPlay = playableCards.find(c => !['A', '2', 'J', 'Q', 'K', '7', 'Joker'].includes(c.rank));
       if (!cardToPlay) {
-        cardToPlay = playableCards[0]; 
+        cardToPlay = playableCards[0];
       }
 
       console.log(`AI ${currentPlayer.name} plays ${cardToPlay.rank} of ${cardToPlay.suit}`);
@@ -290,7 +292,7 @@ class Game {
         this.pendingSuitChange = null;
         return { action: 'play_and_choose_suit', card: cardToPlay, chosenSuit };
       }
-      return { action: 'play', card: cardToPlay };
+      return { action: 'play', card: cardToPlay, result };
     } else {
       console.log(`AI ${currentPlayer.name} has no cards to play and draws.`);
       this.drawCard(currentPlayer.id);

@@ -52,21 +52,24 @@ const handleTurnAdvancement = (game, lastPlayerSocketId = null) => {
     return;
   }
 
-  const turnResult = game.advanceTurn();
-  if (turnResult === 'countdown-win') {
-    io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
-    gameManager.endGame(game.gameId);
-    return;
-  }
-  
-  notifyGameStateUpdate(game);
+      const turnResult = game.advanceTurn();
+          if (turnResult === 'countdown-win') {
+            io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
+            gameManager.endGame(game.gameId);
+            return;
+          }  notifyGameStateUpdate(game);
 
   const currentPlayer = game.players[game.currentPlayerIndex];
   if (currentPlayer && currentPlayer.isAI) {
     setTimeout(() => {
-      game.runAITurn();
+      const aiMove = game.runAITurn();
+      if (aiMove && aiMove.result === 'countdown-win') {
+        io.to(game.gameId).emit('game-over', { winnerId: currentPlayer.id });
+        gameManager.endGame(game.gameId);
+        return;
+      }
       handleTurnAdvancement(game, currentPlayer.id); 
-    }, 1000); 
+    }, 1000);
   }
 };
 
