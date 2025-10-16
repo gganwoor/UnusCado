@@ -166,11 +166,23 @@ function App() {
     socketRef.current?.emit('create-game', { playerName });
   };
 
-  const handleJoinGame = (gameId: string, playerName: string) => {
-    socketRef.current?.emit('join-game', { gameId, playerName });
-  };
+    const handleJoinGame = (gameId: string, playerName: string) => {
 
-  const handlePlayCard = (card: CardData) => {
+      socketRef.current?.emit('join-game', { gameId, playerName });
+
+    };
+
+  
+
+    const handleCreateSinglePlayerGame = (playerName: string) => {
+
+      socketRef.current?.emit('create-single-player-game', { playerName });
+
+    };
+
+  
+
+    const handlePlayCard = (card: CardData) => {
     if (!isMyTurn || !socketRef.current) return;
     
     if (card.rank === '7') {
@@ -263,6 +275,7 @@ function App() {
         <Lobby 
           onCreateGame={handleCreateGame} 
           onJoinGame={handleJoinGame} 
+          onCreateSinglePlayerGame={handleCreateSinglePlayerGame}
         />
       ) : (
         <>

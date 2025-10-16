@@ -1,6 +1,7 @@
 class Game {
-  constructor(gameId) {
-    this.gameId = gameId;
+  constructor(options = {}) {
+    this.gameId = options.gameId;
+    this.lastActivity = Date.now();
     this.players = [];
     this.deck = [];
     this.discardPile = [];
@@ -12,11 +13,23 @@ class Game {
     this.countdownState = { ownerId: null, number: null };
   }
 
+  updateLastActivity() {
+    this.lastActivity = Date.now();
+  }
+
+  cleanup() {
+    
+    console.log(`Cleaning up game ${this.gameId}`);
+  }
+
   addPlayer(socketId, playerName) {
-    this.players.push({ id: socketId, hand: [], name: playerName });
+    this.updateLastActivity();
+    const isAI = socketId.startsWith('ai-');
+    this.players.push({ id: socketId, hand: [], name: playerName, isAI });
   }
 
   removePlayer(socketId) {
+    this.updateLastActivity();
     this.players = this.players.filter(p => p.id !== socketId);
   }
 
@@ -32,12 +45,13 @@ class Game {
       drawPileSize: this.drawPile.length,
       currentPlayerId: this.players[this.currentPlayerIndex] ? this.players[this.currentPlayerIndex].id : null,
       attackStack: this.attackStack,
-      players: this.players.map(p => ({ id: p.id, name: p.name, handSize: p.hand.length })),
+      players: this.players.map(p => ({ id: p.id, name: p.name, handSize: p.hand.length, isAI: p.isAI })),
       countdownState: this.countdownState,
     };
   }
 
   startGame() {
+    this.updateLastActivity();
     const suits = {
       '♥': 'Red',
       '♦': 'Red',
@@ -105,6 +119,7 @@ class Game {
   }
 
   playCard(socketId, cardToPlay) {
+    this.updateLastActivity();
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
       return false;
@@ -193,6 +208,7 @@ class Game {
   }
 
   drawCard(socketId) {
+    this.updateLastActivity();
     const player = this.players.find(p => p.id === socketId);
     if (!player || player.id !== this.players[this.currentPlayerIndex].id) {
       return false;
@@ -235,6 +251,7 @@ class Game {
   }
 
   advanceTurn(skipNext = false) {
+    this.updateLastActivity();
     let nextPlayerIndex = this.currentPlayerIndex;
     if (skipNext) {
       nextPlayerIndex += this.direction * 2;
@@ -267,6 +284,49 @@ class Game {
   checkWinCondition(socketId) {
     const player = this.players.find(p => p.id === socketId);
     return player && player.hand.length === 0;
+  }
+
+  runAITurn() {
+    const currentPlayer = this.players[this.currentPlayerIndex];
+    if (!currentPlayer || !currentPlayer.isAI) {
+      return null;
+    }
+
+    this.updateLastActivity();
+
+    const topCard = this.discardPile[0];
+    let playableCard = null;
+
+    
+    for (const card of currentPlayer.hand) {
+      let isValid = false;
+      if (this.attackStack > 0) {
+        const isAttackCard = ['A', '2', 'Joker'].includes(card.rank);
+        const isDefenseCard = card.rank === '3';
+        if (isAttackCard || isDefenseCard) {
+           isValid = true; 
+        }
+      } else if (topCard) {
+        if (card.rank === 'Joker' || card.rank === topCard.rank || card.suit === topCard.suit) {
+          isValid = true;
+        }
+      }
+      
+      if (isValid) {
+        playableCard = card;
+        break;
+      }
+    }
+
+    if (playableCard) {
+      console.log(`AI ${currentPlayer.name} plays ${playableCard.rank} of ${playableCard.suit}`);
+      this.playCard(currentPlayer.id, playableCard);
+      return { action: 'play', card: playableCard };
+    } else {
+      console.log(`AI ${currentPlayer.name} draws a card`);
+      this.drawCard(currentPlayer.id);
+      return { action: 'draw' };
+    }
   }
 }
 

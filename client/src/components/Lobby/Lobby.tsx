@@ -4,9 +4,10 @@ import './Lobby.scss';
 interface LobbyProps {
   onCreateGame: (playerName: string) => void;
   onJoinGame: (gameId: string, playerName: string) => void;
+  onCreateSinglePlayerGame: (playerName: string) => void;
 }
 
-const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame }) => {
+const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onCreateSinglePlayerGame }) => {
   const [playerName, setPlayerName] = useState('');
   const [gameId, setGameId] = useState('');
 
@@ -19,6 +20,12 @@ const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame }) => {
   const handleJoin = () => {
     if (playerName && gameId) {
       onJoinGame(gameId.toUpperCase(), playerName);
+    }
+  };
+
+  const handleCreateSinglePlayer = () => {
+    if (playerName) {
+      onCreateSinglePlayerGame(playerName);
     }
   };
 
@@ -35,6 +42,9 @@ const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame }) => {
         />
         <button onClick={handleCreate} disabled={!playerName} className="lobby-button">
           Create Game
+        </button>
+        <button onClick={handleCreateSinglePlayer} disabled={!playerName} className="lobby-button single-player-button">
+          혼자서 시작하기
         </button>
         <div className="join-game-section">
           <input

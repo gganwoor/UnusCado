@@ -1,10 +1,14 @@
+console.log('\n--- GEMINI AGENT MODIFIED THIS FILE ---\n');
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const isDevMode = process.env.NODE_ENV === 'development';
+
 const Game = isDevMode
   ? require('./src/Game.dev')
   : require('./src/Game');
+
+const gameManager = require('./src/GameManager');
 
 if (isDevMode) {
   console.log('\n!!! DEVELOPMENT MODE ACTIVE !!!');
@@ -28,12 +32,6 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 4000;
 
-const games = {};
-
-const generateGameId = () => {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-};
-
 app.get('/', (req, res) => {
   res.send('<h1>Unus Cado Server</h1>');
 });
@@ -41,20 +39,43 @@ app.get('/', (req, res) => {
 const notifyGameStateUpdate = (game) => {
   if (!game) return;
   game.players.forEach(p => {
-    io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+    if (!p.isAI) {
+      io.to(p.id).emit('game-state-update', game.getGameStateForPlayer(p.id));
+    }
   });
+};
+
+const handleTurnAdvancement = (game, lastPlayerSocketId = null) => {
+  if (lastPlayerSocketId && game.checkWinCondition(lastPlayerSocketId)) {
+    io.to(game.gameId).emit('game-over', { winnerId: lastPlayerSocketId });
+    gameManager.endGame(game.gameId);
+    return;
+  }
+
+  const turnResult = game.advanceTurn();
+  if (turnResult === 'countdown-win') {
+    io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
+    gameManager.endGame(game.gameId);
+    return;
+  }
+  
+  notifyGameStateUpdate(game);
+
+  const currentPlayer = game.players[game.currentPlayerIndex];
+  if (currentPlayer && currentPlayer.isAI) {
+    setTimeout(() => {
+      game.runAITurn();
+      handleTurnAdvancement(game, currentPlayer.id); 
+    }, 1000); 
+  }
 };
 
 io.on('connection', (socket) => {
   console.log(`A user connected: ${socket.id}`);
 
   socket.on('create-game', ({ playerName }) => {
-    let gameId = generateGameId();
-    while(games[gameId]) {
-        gameId = generateGameId();
-    }
-    const game = new Game(gameId);
-    games[gameId] = game;
+    const game = gameManager.createGame({ isDevMode }, Game);
+    const gameId = game.gameId;
 
     socket.join(gameId);
     socket.gameId = gameId;
@@ -66,7 +87,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join-game', ({ gameId, playerName }) => {
-    const game = games[gameId];
+    const game = gameManager.getGame(gameId);
     if (!game) {
       return socket.emit('unknown-game');
     }
@@ -79,41 +100,61 @@ io.on('connection', (socket) => {
     notifyGameStateUpdate(game);
   });
 
+  socket.on('create-single-player-game', ({ playerName }) => {
+    console.log(`'create-single-player-game' event received from ${playerName}`);
+    const game = gameManager.createGame({ isDevMode, mode: 'single-player' }, Game);
+    const gameId = game.gameId;
+
+    socket.join(gameId);
+    socket.gameId = gameId;
+    game.addPlayer(socket.id, playerName || 'Player');
+
+    const botNames = ['Bot 1', 'Bot 2', 'Bot 3'];
+    for (let i = 0; i < botNames.length; i++) {
+      const botId = `ai-player-${i + 1}`;
+      game.addPlayer(botId, botNames[i]);
+    }
+
+    game.startGame();
+
+    console.log(`Single player game ${gameId} created for ${socket.id} with 3 bots.`);
+
+    socket.emit('game-created', { gameId });
+    notifyGameStateUpdate(game);
+
+    const currentPlayer = game.players[game.currentPlayerIndex];
+    if (currentPlayer && currentPlayer.isAI) {
+      setTimeout(() => {
+        game.runAITurn();
+        handleTurnAdvancement(game, currentPlayer.id);
+      }, 1000);
+    }
+  });
+
   socket.on('start-game', () => {
-    const game = games[socket.gameId];
+    const game = gameManager.getGame(socket.gameId);
     if (!game) return;
 
     game.startGame();
     notifyGameStateUpdate(game);
   });
 
-  const handleTurnAdvancement = (game, socket) => {
-    const turnResult = game.advanceTurn();
-    if (turnResult === 'countdown-win') {
-      io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
-    } else {
-      notifyGameStateUpdate(game);
-      if (game.checkWinCondition(socket.id)) {
-        io.to(game.gameId).emit('game-over', { winnerId: socket.id });
-      }
-    }
-  };
-
   socket.on('play-card', (cardToPlay) => {
-    const game = games[socket.gameId];
+    const game = gameManager.getGame(socket.gameId);
     if (!game) return;
 
     const result = game.playCard(socket.id, cardToPlay);
 
     if (result === 'countdown-win') {
       io.to(game.gameId).emit('game-over', { winnerId: socket.id });
+      gameManager.endGame(game.gameId);
     } else if (result === 'choose-suit') {
       socket.emit('choose-suit');
     } else if (result === true) {
       if (cardToPlay.rank === 'K') {
         notifyGameStateUpdate(game);
       } else {
-        handleTurnAdvancement(game, socket);
+        handleTurnAdvancement(game, socket.id);
       }
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
@@ -121,25 +162,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('suit-chosen', ({ chosenSuit }) => {
-    const game = games[socket.gameId];
+    const game = gameManager.getGame(socket.gameId);
     if (!game) return;
 
     if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
       const { card } = game.pendingSuitChange;
       card.suit = chosenSuit;
       game.pendingSuitChange = null;
-      handleTurnAdvancement(game, socket);
+      handleTurnAdvancement(game, socket.id);
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
   });
 
   socket.on('draw-card', () => {
-    const game = games[socket.gameId];
+    const game = gameManager.getGame(socket.gameId);
     if (!game) return;
 
     if (game.drawCard(socket.id)) {
-      handleTurnAdvancement(game, socket);
+      handleTurnAdvancement(game, socket.id);
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
@@ -150,8 +191,15 @@ io.on('connection', (socket) => {
     const gameId = socket.gameId;
     if (!gameId) return;
 
-    const game = games[gameId];
+    const game = gameManager.getGame(gameId);
     if (!game) return;
+
+    const isSinglePlayer = game.players.some(p => p.isAI);
+    if (isSinglePlayer && !socket.id.startsWith('ai-')) {
+        console.log(`Human player disconnected from single player game ${gameId}. Ending game.`);
+        gameManager.endGame(gameId);
+        return;
+    }
 
     const disconnectedPlayerIndex = game.players.findIndex(p => p.id === socket.id);
     if (disconnectedPlayerIndex === -1) return;
@@ -162,7 +210,7 @@ io.on('connection', (socket) => {
 
     if (game.players.length === 0) {
       console.log(`Game ${gameId} is empty, deleting.`);
-      delete games[gameId];
+      gameManager.endGame(gameId);
       return; 
     }
 
