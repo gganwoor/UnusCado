@@ -140,8 +140,15 @@ class Game {
 
     if (cardToPlay.isCountdown && cardToPlay.rank === '3') return true;
     if (cardToPlay.rank === 'Joker') return true;
-    if (topCard.rank === 'Joker') return true;
-    if (cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit) return true;
+    if (topCard.rank === 'Joker') {
+      if (!cardToPlay.isCountdown) {
+        return true;
+      }
+      if (cardToPlay.isCountdown && cardToPlay.rank !== '0') {
+        return true;
+      }
+    }
+    if (!cardToPlay.isCountdown && (cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit)) return true;
 
     return false;
   }
