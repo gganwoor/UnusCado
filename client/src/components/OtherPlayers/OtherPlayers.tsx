@@ -1,5 +1,4 @@
 import React from 'react';
-import Card from '../Card';
 import './OtherPlayers.scss';
 
 interface PlayerInfo {
@@ -11,20 +10,21 @@ interface PlayerInfo {
 interface OtherPlayersProps {
   players: PlayerInfo[];
   myPlayerId: string | null;
+  currentPlayerId: string | null;
 }
 
-const OtherPlayers: React.FC<OtherPlayersProps> = ({ players, myPlayerId }) => {
+const OtherPlayers: React.FC<OtherPlayersProps> = ({ players, myPlayerId, currentPlayerId }) => {
   return (
     <div className="Other-players">
-      {players.filter(p => p.id !== myPlayerId).map(p => (
-        <div key={p.id} className="Other-player-info">
-          <div className="Card-list">
-            {Array.from({ length: p.handSize }).map((_, i) => (
-              <Card key={i} suit="" rank="" isFaceDown={true} className="small-card" />
-            ))}
+      {players.filter(p => p.id !== myPlayerId).map(p => {
+        const isCurrentTurn = p.id === currentPlayerId;
+        return (
+          <div key={p.id} className={`player-badge ${isCurrentTurn ? 'current-turn' : ''}`}>
+            <span className="player-name">{p.name}</span>
+            <span className="card-count">{p.handSize} Cards</span>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

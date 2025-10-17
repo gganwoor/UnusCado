@@ -14,12 +14,10 @@ interface GameBoardProps {
   drawPileSize: number;
   isMyTurn: boolean;
   onDrawCard: () => void;
-  mustDraw: boolean;
   attackStack: number;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTurn, onDrawCard, mustDraw, attackStack }) => {
-  const mustDrawClass = mustDraw ? (attackStack > 0 ? 'must-draw-attack' : 'must-draw-normal') : '';
+const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTurn, onDrawCard, attackStack }) => {
 
   return (
     <>
@@ -37,7 +35,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTu
       </div>
 
       <div className="Draw-pile" onClick={onDrawCard} style={{ cursor: isMyTurn ? 'pointer' : 'not-allowed' }}>
-        <div className={`Card-list draw-pile-stack ${mustDrawClass}`}>
+        {attackStack > 0 && (
+          <div className="attack-stack-indicator">+{attackStack}</div>
+        )}
+        <div className={`Card-list draw-pile-stack`}>
           {Array.from({ length: drawPileSize }).map((_, i) => {
             const isTopCard = i === drawPileSize - 1;
             const cardClassName = `stacked-card ${isTopCard ? 'top-card' : ''}`;

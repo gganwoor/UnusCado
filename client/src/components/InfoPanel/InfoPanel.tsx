@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './InfoPanel.scss';
-
 
 interface PlayerInfo {
   id: string;
@@ -8,65 +7,59 @@ interface PlayerInfo {
   handSize: number;
 }
 
-interface CountdownState {
-  ownerId: string | null;
-  number: number | null;
-}
-
 interface InfoPanelProps {
   gameId: string | null;
   isConnected: boolean;
-  myPlayerId: string | null;
-  currentPlayerId: string | null;
   players: PlayerInfo[];
-  attackStack: number;
   winnerId: string | null;
   onStartGame: () => void;
-  isMyTurn: boolean;
-  countdownState: CountdownState | null;
+  isGameStarted: boolean;
+  myPlayerId: string | null;
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
   gameId,
   isConnected,
-  myPlayerId,
-  currentPlayerId,
   players,
-  attackStack,
   winnerId,
   onStartGame,
-  isMyTurn,
-  countdownState,
+  isGameStarted,
+  myPlayerId,
 }) => {
-  const countdownOwner = countdownState?.ownerId ? players.find(p => p.id === countdownState.ownerId) : null;
+  const [copied, setCopied] = useState(false);
+  const winner = winnerId ? players.find(p => p.id === winnerId) : null;
+
+  const handleCopy = () => {
+    if (gameId) {
+      navigator.clipboard.writeText(gameId).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
 
   return (
-    <header className="App-header">
-      <div className="info-panel">
-        <h1>Unus Cado</h1>
-        {gameId && <p className="game-id">Game ID: {gameId}</p>}
-        {countdownState && countdownState.number !== null && (
-          <p className="countdown-status">
-            Countdown: {countdownState.number} (Owner: {countdownOwner?.name || 'Unknown'})
-          </p>
-        )}
-        <p>
-          {isConnected && myPlayerId && currentPlayerId && (
-            isMyTurn ? 'Your Turn!' : `It's ${players.find(p => p.id === currentPlayerId)?.name}'s Turn`
-          )}
-        </p>
-        <p>Attack Stack: {attackStack}</p>
-        <button onClick={onStartGame} disabled={!isConnected || winnerId !== null}>
-          Start Game
-        </button>
-        {winnerId && myPlayerId === winnerId && (
-          <h2>You Win!</h2>
-        )}
-        {winnerId && myPlayerId !== winnerId && (
-          <h2>Game Over! Winner: {players.find(p => p.id === winnerId)?.name}</h2>
-        )}
-      </div>
-    </header>
+    <div className="info-panel-container">
+      {!isGameStarted && (
+        <div className="waiting-room-info">
+          <div className="game-id-container">
+            <span>Game ID:</span>
+            <span className="game-id-display">{gameId}</span>
+            <button onClick={handleCopy} className="copy-button">
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <button onClick={onStartGame} disabled={!isConnected || winnerId !== null}>
+            Start Game
+          </button>
+        </div>
+      )}
+      {winner && (
+        <div className="winner-announcement">
+          <h2>{winner.id === myPlayerId ? 'You Win!' : `Winner: ${winner.name}`}</h2>
+        </div>
+      )}
+    </div>
   );
 };
 

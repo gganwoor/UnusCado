@@ -1,26 +1,39 @@
 .Other-players {
-  grid-area: other-players-left;
+  grid-area: other-players;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: flex-start;
-  gap: 10px;
+  gap: 20px;
   padding: 10px;
+  flex-wrap: wrap;
 }
 
-.Other-player-info {
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
+.player-badge {
+  background-color: rgba(45, 55, 72, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
 
-  .Card-list .card-container {
-    margin-left: -40px;
-    position: relative;
-    z-index: 1;
-
-    &:first-child {
-      margin-left: 0;
-    }
+  .player-name {
+    font-weight: bold;
+    color: #e2e8f0;
   }
+
+  .card-count {
+    font-size: 0.9em;
+    color: #a0aec0;
+  }
+}
+
+.player-badge.current-turn {
+  border-color: #63b3ed;
+  box-shadow: 0 0 10px #63b3ed;
+  transform: scale(1.05);
 }
