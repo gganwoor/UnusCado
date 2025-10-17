@@ -187,6 +187,10 @@ class Game {
         return 'choose-suit';
       }
 
+      if (playedCard.rank === 'K' && !isInterrupt) {
+        return 'play-again';
+      }
+
       return true;
     }
     return false;

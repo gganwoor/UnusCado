@@ -153,12 +153,10 @@ io.on('connection', (socket) => {
       gameManager.endGame(game.gameId);
     } else if (result === 'choose-suit') {
       socket.emit('choose-suit');
+    } else if (result === 'play-again') {
+      notifyGameStateUpdate(game);
     } else if (result === true) {
-      if (cardToPlay.rank === 'K') {
-        notifyGameStateUpdate(game);
-      } else {
-        handleTurnAdvancement(game, socket.id);
-      }
+      handleTurnAdvancement(game, socket.id);
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
