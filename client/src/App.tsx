@@ -1,6 +1,7 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
 import './App.scss';
+import { isCardPlayable } from './utils/card-logic';
 
 import Lobby from './components/Lobby/Lobby';
 import InfoPanel from './components/InfoPanel/InfoPanel';
@@ -213,6 +214,9 @@ function App() {
   const isMyTurn = state.myPlayerId === state.currentPlayerId;
   const isGameStarted = state.discardPile.length > 0;
 
+  const hasPlayableCard = state.playerHand.some(card => isCardPlayable(card, state.discardPile, state.attackStack, state.countdownState));
+  const mustDraw = isMyTurn && !hasPlayableCard;
+
   return (
     <div className="App">
       {!state.gameId ? (
@@ -243,6 +247,7 @@ function App() {
                 drawPileSize={state.drawPileSize}
                 isMyTurn={isMyTurn}
                 onDrawCard={handleDrawCard}
+                mustDraw={mustDraw}
                 attackStack={state.attackStack}
               />
             </div>
