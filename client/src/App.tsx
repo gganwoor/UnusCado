@@ -224,6 +224,7 @@ function App() {
           onCreateGame={handleCreateGame} 
           onJoinGame={handleJoinGame} 
           onCreateSinglePlayerGame={handleCreateSinglePlayerGame}
+          gameError={state.gameError}
         />
       ) : (
         <div className="Game-board">
@@ -249,6 +250,8 @@ function App() {
                 onDrawCard={handleDrawCard}
                 mustDraw={mustDraw}
                 attackStack={state.attackStack}
+                countdownState={state.countdownState}
+                players={state.players}
               />
             </div>
             <PlayerHand

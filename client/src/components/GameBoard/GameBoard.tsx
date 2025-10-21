@@ -9,6 +9,16 @@ interface CardData {
   isCountdown?: boolean;
 }
 
+interface PlayerInfo {
+  id: string;
+  name: string;
+}
+
+interface CountdownState {
+  ownerId: string | null;
+  number: number | null;
+}
+
 interface GameBoardProps {
   discardPile: CardData[];
   drawPileSize: number;
@@ -16,10 +26,22 @@ interface GameBoardProps {
   onDrawCard: () => void;
   mustDraw: boolean;
   attackStack: number;
+  countdownState: CountdownState | null;
+  players: PlayerInfo[];
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTurn, onDrawCard, mustDraw, attackStack }) => {
+const GameBoard: React.FC<GameBoardProps> = ({ 
+  discardPile, 
+  drawPileSize, 
+  isMyTurn, 
+  onDrawCard, 
+  mustDraw, 
+  attackStack, 
+  countdownState,
+  players
+}) => {
   const mustDrawClass = mustDraw ? (attackStack > 0 ? 'must-draw-attack' : 'must-draw-normal') : '';
+  const countdownOwner = countdownState?.ownerId ? players.find(p => p.id === countdownState.ownerId) : null;
 
   return (
     <>
@@ -33,6 +55,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ discardPile, drawPileSize, isMyTu
           />
         ) : (
           <Card suit="" rank="" className="empty" />
+        )}
+        {countdownState && countdownState.number !== null && (
+          <div className="countdown-status">
+            Countdown {countdownState.number} (from {countdownOwner?.name || 'Unknown'})
+          </div>
         )}
       </div>
 

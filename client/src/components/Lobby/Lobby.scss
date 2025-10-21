@@ -58,10 +58,29 @@
 }
 
 .join-game-section {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 10px;
+
   margin-top: 20px;
+
   padding-top: 20px;
+
   border-top: 1px solid #4a5568;
+
+}
+
+
+
+.lobby-error {
+
+  color: #e53e3e; /* Red color for errors */
+
+  margin-top: 10px;
+
+  text-align: center;
+
 }

@@ -5,9 +5,10 @@ interface LobbyProps {
   onCreateGame: (playerName: string) => void;
   onJoinGame: (gameId: string, playerName: string) => void;
   onCreateSinglePlayerGame: (playerName: string) => void;
+  gameError: string | null;
 }
 
-const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onCreateSinglePlayerGame }) => {
+const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onCreateSinglePlayerGame, gameError }) => {
   const [playerName, setPlayerName] = useState('');
   const [gameId, setGameId] = useState('');
 
@@ -57,6 +58,7 @@ const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onCreateSingleP
           <button onClick={handleJoin} disabled={!playerName || !gameId} className="lobby-button">
             Join Game
           </button>
+          {gameError && <div className="lobby-error">{gameError}</div>}
         </div>
       </div>
     </div>
