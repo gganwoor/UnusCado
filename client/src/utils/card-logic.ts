@@ -22,12 +22,11 @@ export const isCardPlayable = (
   const topCard = discardPile[0];
 
   if (attackStack > 0) {
-    const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
-    const isDefenseCard = cardToPlay.rank === '3';
-    const isCountdownCard = cardToPlay.isCountdown && cardToPlay.rank === '3';
+    const isAttackCard = !cardToPlay.isCountdown && ['A', '2', 'Joker'].includes(cardToPlay.rank);
+    const isDefenseCard = !cardToPlay.isCountdown && cardToPlay.rank === '3';
 
-    if (isAttackCard || isDefenseCard || isCountdownCard) {
-      if (cardToPlay.rank === 'Joker' || (cardToPlay.isCountdown && cardToPlay.rank === '3')) {
+    if (isAttackCard || isDefenseCard) {
+      if (cardToPlay.rank === 'Joker') {
         return true;
       }
       if (topCard && (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit)) {

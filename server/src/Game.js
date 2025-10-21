@@ -101,12 +101,11 @@ class Game {
     if (!topCard) return true;
 
     if (this.attackStack > 0) {
-      const isAttackCard = ['A', '2', 'Joker'].includes(cardToPlay.rank);
-      const isDefenseCard = cardToPlay.rank === '3';
-      const isCountdownCard = cardToPlay.isCountdown && cardToPlay.rank === '3';
+      const isAttackCard = !cardToPlay.isCountdown && ['A', '2', 'Joker'].includes(cardToPlay.rank);
+      const isDefenseCard = !cardToPlay.isCountdown && cardToPlay.rank === '3';
 
-      if (isAttackCard || isDefenseCard || isCountdownCard) {
-        if (cardToPlay.rank === 'Joker' || (cardToPlay.isCountdown && cardToPlay.rank === '3')) {
+      if (isAttackCard || isDefenseCard) {
+        if (cardToPlay.rank === 'Joker') {
           return true;
         }
         if (topCard.rank === 'Joker' || cardToPlay.rank === topCard.rank || cardToPlay.suit === topCard.suit) {
@@ -285,7 +284,7 @@ class Game {
       if (result === 'choose-suit') {
         const suitCounts = {};
         currentPlayer.hand.forEach(card => {
-          if (card.suit !== 'Black' && card.suit !== 'Color' && card.t !== 'Countdown') {
+          if (card.suit !== 'Black' && card.suit !== 'Color' && card.suit !== 'Countdown') {
             suitCounts[card.suit] = (suitCounts[card.suit] || 0) + 1;
           }
         });
