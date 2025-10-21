@@ -86,7 +86,6 @@ class Game {
   applySpecialCardEffect(playedCard, socketId) {
     if (playedCard.isCountdown) return;
     if (playedCard.rank === 'K') {} 
-    else if (playedCard.rank === 'J') { this.advanceTurn(true); }
     else if (playedCard.rank === 'Q') { this.direction *= -1; }
     else if (playedCard.rank === '2') { this.attackStack += 2; }
     else if (playedCard.rank === 'A') { this.attackStack += 3; }

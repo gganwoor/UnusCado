@@ -45,30 +45,38 @@ const notifyGameStateUpdate = (game) => {
   });
 };
 
-const handleTurnAdvancement = (game, lastPlayerSocketId = null) => {
+const handleTurnAdvancement = (game, lastPlayerSocketId = null, options = {}) => {
+  const { skip = false } = options;
+
   if (lastPlayerSocketId && game.checkWinCondition(lastPlayerSocketId)) {
     io.to(game.gameId).emit('game-over', { winnerId: lastPlayerSocketId });
     gameManager.endGame(game.gameId);
     return;
   }
 
-      const turnResult = game.advanceTurn();
-          if (turnResult === 'countdown-win') {
-            io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
-            gameManager.endGame(game.gameId);
-            return;
-          }  notifyGameStateUpdate(game);
+  const turnResult = game.advanceTurn(skip);
+  if (turnResult === 'countdown-win') {
+    io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
+    gameManager.endGame(game.gameId);
+    return;
+  }
+  
+  notifyGameStateUpdate(game);
 
   const currentPlayer = game.players[game.currentPlayerIndex];
   if (currentPlayer && currentPlayer.isAI) {
     setTimeout(() => {
       const aiMove = game.runAITurn();
-      if (aiMove && aiMove.result === 'countdown-win') {
+      if (!aiMove) return;
+
+      if (aiMove.result === 'countdown-win') {
         io.to(game.gameId).emit('game-over', { winnerId: currentPlayer.id });
         gameManager.endGame(game.gameId);
         return;
       }
-      handleTurnAdvancement(game, currentPlayer.id); 
+
+      const isJCard = aiMove.action === 'play' && aiMove.card.rank === 'J';
+      handleTurnAdvancement(game, currentPlayer.id, { skip: isJCard });
     }, 1000);
   }
 };
@@ -127,10 +135,8 @@ io.on('connection', (socket) => {
 
     const currentPlayer = game.players[game.currentPlayerIndex];
     if (currentPlayer && currentPlayer.isAI) {
-      setTimeout(() => {
-        game.runAITurn();
-        handleTurnAdvancement(game, currentPlayer.id);
-      }, 1000);
+      const isJCard = false;
+      handleTurnAdvancement(game, null, { skip: isJCard });
     }
   });
 
@@ -156,7 +162,8 @@ io.on('connection', (socket) => {
     } else if (result === 'play-again') {
       notifyGameStateUpdate(game);
     } else if (result === true) {
-      handleTurnAdvancement(game, socket.id);
+      const isJCard = cardToPlay.rank === 'J';
+      handleTurnAdvancement(game, socket.id, { skip: isJCard });
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
@@ -167,10 +174,9 @@ io.on('connection', (socket) => {
     if (!game) return;
 
     if (game.pendingSuitChange && game.pendingSuitChange.playerId === socket.id) {
-      const { card } = game.pendingSuitChange;
-      card.suit = chosenSuit;
+      game.discardPile[0].suit = chosenSuit;
       game.pendingSuitChange = null;
-      handleTurnAdvancement(game, socket.id);
+      handleTurnAdvancement(game, socket.id, { skip: false });
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
@@ -181,7 +187,7 @@ io.on('connection', (socket) => {
     if (!game) return;
 
     if (game.drawCard(socket.id)) {
-      handleTurnAdvancement(game, socket.id);
+      handleTurnAdvancement(game, socket.id, { skip: false });
     } else {
       socket.emit('game-state-update', game.getGameStateForPlayer(socket.id));
     }
