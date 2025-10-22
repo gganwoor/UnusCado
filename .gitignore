@@ -20,5 +20,5 @@ yarn-error.log*
 # macOS
 .DS_Store
 
-# 규칙 파일, 노트
-rule.md
+# 노트
+note.md
