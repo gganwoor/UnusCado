@@ -12,12 +12,12 @@
 }
 
 .Game-board {
+  position: relative;
   display: grid;
   grid-template-areas:
     "other-players"
-    "game-area"
-    "player-hand";
-  grid-template-rows: auto 1fr auto;
+    "game-area";
+  grid-template-rows: auto 1fr;
   gap: 10px;
   width: 100%;
   height: 100%;

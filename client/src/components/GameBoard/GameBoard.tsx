@@ -83,9 +83,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
               />
             );
           })}
-          {drawPileSize === 0 && (
-            <Card suit="" rank="" className="empty" />
-          )}
         </div>
       </div>
     </>
