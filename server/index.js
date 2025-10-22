@@ -49,15 +49,21 @@ const handleTurnAdvancement = (game, lastPlayerSocketId = null, options = {}) =>
   const { skip = false } = options;
 
   if (lastPlayerSocketId && game.checkWinCondition(lastPlayerSocketId)) {
-    io.to(game.gameId).emit('game-over', { winnerId: lastPlayerSocketId });
-    gameManager.endGame(game.gameId);
+    notifyGameStateUpdate(game);
+    setTimeout(() => {
+      io.to(game.gameId).emit('game-over', { winnerId: lastPlayerSocketId });
+      gameManager.endGame(game.gameId);
+    }, 500);
     return;
   }
 
   const turnResult = game.advanceTurn(skip);
   if (turnResult === 'countdown-win') {
-    io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
-    gameManager.endGame(game.gameId);
+    notifyGameStateUpdate(game);
+    setTimeout(() => {
+      io.to(game.gameId).emit('game-over', { winnerId: game.countdownState.ownerId });
+      gameManager.endGame(game.gameId);
+    }, 500);
     return;
   }
   
