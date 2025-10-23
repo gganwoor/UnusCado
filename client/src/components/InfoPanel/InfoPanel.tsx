@@ -15,6 +15,7 @@ interface InfoPanelProps {
   onStartGame: () => void;
   isGameStarted: boolean;
   myPlayerId: string | null;
+  onBackToLobby: () => void;
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
@@ -25,6 +26,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   onStartGame,
   isGameStarted,
   myPlayerId,
+  onBackToLobby,
 }) => {
   const [copied, setCopied] = useState(false);
   const winner = winnerId ? players.find(p => p.id === winnerId) : null;
@@ -56,7 +58,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       )}
       {winner && (
         <div className="winner-announcement">
-          <h2>{winner.id === myPlayerId ? 'You Win!' : `Winner: ${winner.name}`}</h2>
+          <div className="winner-box">
+            <h2>{winner.id === myPlayerId ? 'You Win!' : `Winner: ${winner.name}`}</h2>
+            <button onClick={onBackToLobby} className="lobby-button">
+              Back to Lobby
+            </button>
+          </div>
         </div>
       )}
     </div>

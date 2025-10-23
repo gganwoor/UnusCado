@@ -20,14 +20,27 @@
   align-items: center;
   z-index: 2000;
 
-.winner-announcement h2 {
-    color: #63b3ed;
-    font-size: 4em;
-    text-align: center;
+  .winner-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
     background-color: rgba(45, 55, 72, 0.9);
     padding: 40px 60px;
     border-radius: 15px;
     box-shadow: 0 0 20px #63b3ed;
+  }
+
+  h2 {
+    color: #63b3ed;
+    font-size: 4em;
+    text-align: center;
+    margin: 0;
+  }
+
+  .lobby-button {
+    font-size: 1.2em;
+    padding: 12px 25px;
   }
 }
 

@@ -50,7 +50,8 @@ type AppAction =
   | { type: 'CHOOSE_SUIT' }
   | { type: 'PLAY_CARD_PENDING'; payload: CardData }
   | { type: 'SUIT_CHOICE_COMPLETE' }
-  | { type: 'START_GAME_PENDING' };
+  | { type: 'START_GAME_PENDING' }
+  | { type: 'RESET_GAME' };
 
 const initialState: AppState = {
   gameId: null,
@@ -98,6 +99,8 @@ function gameReducer(state: AppState, action: AppAction): AppState {
       return { ...state, gameError: action.payload };
     case 'GAME_OVER':
       return { ...state, winnerId: action.payload };
+    case 'RESET_GAME':
+      return { ...initialState, isConnected: state.isConnected, myPlayerId: state.myPlayerId };
     case 'CHOOSE_SUIT':
       return { ...state, showSuitChooser: true };
     case 'PLAY_CARD_PENDING':
@@ -211,6 +214,10 @@ function App() {
     socketRef.current.emit('start-game');
   };
 
+  const handleBackToLobby = () => {
+    dispatch({ type: 'RESET_GAME' });
+  };
+
   const isMyTurn = state.myPlayerId === state.currentPlayerId;
   const isGameStarted = state.discardPile.length > 0;
 
@@ -242,6 +249,7 @@ function App() {
                 onStartGame={startGame}
                 isGameStarted={isGameStarted}
                 myPlayerId={state.myPlayerId}
+                onBackToLobby={handleBackToLobby}
               />
               <GameBoard
                 discardPile={state.discardPile}
