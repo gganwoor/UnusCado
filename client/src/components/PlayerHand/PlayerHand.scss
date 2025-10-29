@@ -61,5 +61,33 @@
 }
 
 .Player-hand .Card-list .card-container.playable-attack:hover {
+
   transform: translateY(-10px);
+
+}
+
+.card-fly-container {
+  position: fixed;
+  z-index: 3000;
+  pointer-events: none;
+  animation: card-fly-animation 0.4s ease-in-out forwards;
+  top: var(--start-y);
+  left: var(--start-x);
+  width: var(--start-width);
+  height: var(--start-height);
+}
+
+@keyframes card-fly-animation {
+  from {
+    top: var(--start-y);
+    left: var(--start-x);
+    width: var(--start-width);
+    height: var(--start-height);
+  }
+  to {
+    top: var(--end-y);
+    left: var(--end-x);
+        width: var(--end-width);
+        height: var(--end-height);
+      }
 }
